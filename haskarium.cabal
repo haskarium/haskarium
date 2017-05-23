@@ -1,0 +1,10 @@
+name: haskarium
+version: 0.1
+
+cabal-version: >= 1.2
+build-type: Simple
+
+executable haskarium
+    hs-source-dirs: exe
+    main-is: Main.hs
+    build-depends: base
