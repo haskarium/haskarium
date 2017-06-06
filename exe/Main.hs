@@ -1,22 +1,36 @@
-import           Graphics.Gloss.Interface.Pure.Game
+-- import  Prelude                             hiding (($))
+import  Data.Time
+import  Graphics.Gloss.Interface.Pure.Game
 
 main :: IO ()
-main = play display green refreshRate initial draw onEvent onTick
+main = do
+    zt <- getZonedTime
+    let time = realToFrac $ timeOfDayToTime $ localTimeOfDay $ zonedTimeToLocalTime zt
+    play display green refreshRate time draw onEvent onTick
   where
     display = InWindow "haskarium" (800, 600) (0, 0)
     refreshRate = 60
 
 type World = Float
 
-initial :: World
-initial = 0
-
 draw :: World -> Picture
-draw time = pictures
-    [ translate (-300) 100 $ text (show (floor time :: Int) ++ " seconds")
-    , color red $ circleSolid 50
-    , rotate (time * 50) $ color yellow $ triangle 150 150 150
-    ]
+draw time = pictures [numbers, hands]
+  where
+    seconds = fromIntegral (round time :: Int)
+    minutes = seconds / 60
+    hours = minutes / 60
+    hands = pictures
+        [ rotate (6 * seconds) $ line [(0, 0), (0, 200)]
+        , rotate (6 * minutes) $ line [(0, 0), (0, 150)]
+        , rotate (30 * hours) $ line [(0, 0), (0, 100)]
+        ]
+    numbers = pictures
+        [ rotate a $
+          translate dx 200 $ scale 0.2 0.2 $ text $ show n
+        | n <- [1 .. 12 :: Int]
+        , let a = fromIntegral (30 * n)
+        , let dx = if n < 10 then -7.5 else -15
+        ]
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
@@ -24,12 +38,7 @@ onEvent _ world = world
 onTick :: Float -> World -> World
 onTick dt time = time + dt
 
-triangle :: Float -> Float -> Float -> Picture
-triangle a b c = polygon
-    [ (0, 0)
-    , (a, 0)
-    , (c * cosA, c * sinA)
-    ]
-  where
-    cosA = (a*a + c*c - b*b) / (2*a*c)
-    sinA = sin (acos cosA)
+-- ($) f x
+-- ($) :: (a -> b) -> a -> b
+-- f $ x = f x
+-- infixr 0 $

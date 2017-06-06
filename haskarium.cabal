@@ -9,3 +9,4 @@ executable haskarium-view
     main-is: Main.hs
     build-depends:  base
                   , gloss
+                  , time
