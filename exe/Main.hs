@@ -1,18 +1,37 @@
+import           Data.Time
 import           Graphics.Gloss.Interface.Pure.Game
 
 main :: IO ()
-main = play display white refreshRate initial draw onEvent onTick
+main = do
+    zt <- getZonedTime
+    let time =
+            realToFrac $
+            timeOfDayToTime $ localTimeOfDay $ zonedTimeToLocalTime zt
+    play display white refreshRate time draw onEvent onTick
   where
     display = InWindow "haskarium" (800, 600) (0, 0)
     refreshRate = 60
 
-type World = Float
-
-initial :: World
-initial = 0
+type World = Float -- seconds from Midnight
 
 draw :: World -> Picture
-draw time = text (show (floor time :: Int) ++ " seconds")
+draw time = pictures [numbers, hands]
+  where
+    seconds = fromIntegral (round time :: Int)
+    minutes = seconds / 60
+    hours = minutes / 60
+    hands = pictures
+        [ rotate (6  * seconds) $ line [(0, 0), (0, 200)]
+        , rotate (6  * minutes) $ line [(0, 0), (0, 150)]
+        , rotate (30 * hours  ) $ line [(0, 0), (0, 100)]
+        ]
+    numbers = pictures
+        [ rotate a $
+          translate dx 200 $ scale 0.2 0.2 $ text $ show n
+        | n <- [1 .. 12 :: Int]
+        , let a = fromIntegral (30 * n)
+        , let dx = if n < 10 then -7.5 else -15
+        ]
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
