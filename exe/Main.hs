@@ -12,7 +12,10 @@ initial :: World
 initial = 0
 
 draw :: World -> Picture
-draw time = text (show (floor time :: Int) ++ " seconds")
+draw _ = pictures [rcircle, ytriang]
+  where rcircle = translate (-200) 0 $ color red $ circleSolid 100
+        ytriang = translate 200 0 $ color yellow triang
+        triang  = polygon [(-100, -100), (100, -100), (0, 100)]
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
