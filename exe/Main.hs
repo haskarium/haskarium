@@ -35,4 +35,4 @@ onEvent :: Event -> World -> World
 onEvent _ world = world
 
 onTick :: Float -> World -> World
-onTick dt picture = picture + dt
+onTick dt time = time + dt
