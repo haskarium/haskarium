@@ -9,14 +9,15 @@ main = do
             timeOfDayToTime $ localTimeOfDay $ zonedTimeToLocalTime zt
     play display white refreshRate time draw onEvent onTick
   where
-    display = InWindow "haskarium" (800, 600) (0, 0)
+    display = InWindow "haskarium" (600, 1000) (0, 0)
     refreshRate = 60
 
 type World = Float -- seconds from Midnight
 
 draw :: World -> Picture
-draw time = pictures [numbers, hands]
+draw time = pictures [clock, pendulum]
   where
+    clock = translate 0 250 $ pictures [numbers, hands]
     seconds = fromIntegral (round time :: Int)
     minutes = seconds / 60
     hours = minutes / 60
@@ -32,6 +33,18 @@ draw time = pictures [numbers, hands]
         , let a = fromIntegral (30 * n)
         , let dx = if n < 10 then -7.5 else -15
         ]
+    pendulum = rotate alpha $ pictures
+        [ line [(0, 0), (0, -lineLength)]
+        , translate 0 (-(lineLength + circleRadius)) $ circleSolid circleRadius
+        ]
+    alpha = 57.3 * alpha0 * cos (omega * time)
+    alpha0 = pi / 18 -- 10 deg
+    omega = sqrt (g / length)
+    -- need to normalize somehow, let 1 pixel = 1 mm
+    length = (lineLength + circleRadius * 2) / 1000
+    lineLength = 400
+    circleRadius = 20
+    g = 9.8
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
