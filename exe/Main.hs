@@ -39,9 +39,9 @@ draw time = pictures [clock, pendulum]
         ]
     alpha = 57.3 * alpha0 * cos (omega * time)
     alpha0 = pi / 18 -- 10 deg
-    omega = sqrt (g / length)
+    omega = sqrt (g / pendulumLength)
     -- need to normalize somehow, let 1 pixel = 1 mm
-    length = (lineLength + circleRadius * 2) / 1000
+    pendulumLength = (lineLength + circleRadius * 2) / 1000
     lineLength = 400
     circleRadius = 20
     g = 9.8
