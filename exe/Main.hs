@@ -15,8 +15,18 @@ main = do
 type World = Float -- seconds from Midnight
 
 draw :: World -> Picture
-draw time = pictures [numbers, hands]
+draw time = pictures [numbers, hands, body, pendulum]
   where
+    body = pictures
+        [ circle 230
+        , rectangleWire 480 480
+        ]
+    pendulum = rotate (10 * cos (time * pi) ) $
+        translate 0 (-240) $
+        pictures
+        [ line [(0, 0), (0, -180)]
+        , translate 0 (-200) $ circle 20
+        ]
     seconds = fromIntegral (round time :: Int)
     minutes = seconds / 60
     hours = minutes / 60
