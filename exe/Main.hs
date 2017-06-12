@@ -9,14 +9,24 @@ main = do
             timeOfDayToTime $ localTimeOfDay $ zonedTimeToLocalTime zt
     play display white refreshRate time draw onEvent onTick
   where
-    display = InWindow "haskarium" (800, 600) (0, 0)
+    display = InWindow "haskarium" (800, 800) (0, 0)
     refreshRate = 60
 
 type World = Float -- seconds from Midnight
 
 draw :: World -> Picture
-draw time = pictures [numbers, hands]
+draw time = translate 0 100 $ pictures [numbers, hands, body, pendulum]
   where
+    body = pictures
+        [ circle 230
+        , rectangleWire 480 480
+        ]
+    pendulum = rotate (10 * cos (time * pi) ) $
+        translate 0 (-240) $
+        pictures
+        [ line [(0, 0), (0, -180)]
+        , translate 0 (-200) $ circle 20
+        ]
     seconds = fromIntegral (round time :: Int)
     minutes = seconds / 60
     hours = minutes / 60
