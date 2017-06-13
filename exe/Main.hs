@@ -1,40 +1,35 @@
-import           Data.Time
 import           Graphics.Gloss.Interface.Pure.Game
 
 main :: IO ()
-main = do
-    zt <- getZonedTime
-    let time =
-            realToFrac $
-            timeOfDayToTime $ localTimeOfDay $ zonedTimeToLocalTime zt
-    play display white refreshRate time draw onEvent onTick
+main =
+    play display white refreshRate startWorld draw onEvent onTick
   where
     display = InWindow "haskarium" (800, 600) (0, 0)
     refreshRate = 60
+    startWorld = Ant{position = (0, 0), direction = 42}
 
-type World = Float -- seconds from Midnight
+type Angle = Float
+
+data Ant = Ant{position :: !Point, direction :: !Angle}
+
+type World = Ant
 
 draw :: World -> Picture
-draw time = pictures [numbers, hands]
-  where
-    seconds = fromIntegral (round time :: Int)
-    minutes = seconds / 60
-    hours = minutes / 60
-    hands = pictures
-        [ rotate (6  * seconds) $ line [(0, 0), (0, 200)]
-        , rotate (6  * minutes) $ line [(0, 0), (0, 150)]
-        , rotate (30 * hours  ) $ line [(0, 0), (0, 100)]
-        ]
-    numbers = pictures
-        [ rotate a $
-          translate dx 200 $ scale 0.2 0.2 $ text $ show n
-        | n <- [1 .. 12 :: Int]
-        , let a = fromIntegral (30 * n)
-        , let dx = if n < 10 then -7.5 else -15
-        ]
+draw Ant{position = (x, y)} =
+    translate x y $ color red $ rectangleSolid 10 10
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
 
 onTick :: Float -> World -> World
-onTick dt time = time + dt
+onTick dt world = move dt ant
+  where
+    ant = world
+
+move :: Float -> Ant -> Ant
+move dt Ant{position = (x, y), direction = dir} = Ant
+    {position = (x + dx, y + dy), direction = dir + dt}
+  where
+    dx = speed * dt * cos dir
+    dy = speed * dt * sin dir
+    speed = 20
