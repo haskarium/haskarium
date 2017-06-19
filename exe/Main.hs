@@ -7,14 +7,15 @@ main =
     display = InWindow "haskarium" (800, 600) (0, 0)
     refreshRate = 60
     startWorld =
-        [ Ant{position = (0, 0), direction = (-pi) / 4}
-        , Ant{position = (-30, -30), direction = 3 * pi / 4}
-        , Ant{position = (20, 40), direction = pi / 3}
+        [ Ant{position = (0, 0), direction = (-pi) / 4, turnRate = pi / 8}
+        , Ant{position = (-30, -30), direction = 3 * pi / 4, turnRate = (-pi) / 3}
+        , Ant{position = (20, 40), direction = pi / 3, turnRate = pi / 4}
         ]
 
 type Angle = Float
+type RadiansPerSecond = Float
 
-data Ant = Ant{position :: !Point, direction :: !Angle}
+data Ant = Ant{position :: !Point, direction :: !Angle, turnRate :: !RadiansPerSecond}
 
 type World = [Ant]
 
@@ -32,9 +33,9 @@ onTick :: Float -> World -> World
 onTick dt world = [move dt ant | ant <- world]
 
 move :: Float -> Ant -> Ant
-move dt Ant{position = (x, y), direction = dir} = Ant
-    {position = (x + dx, y + dy), direction = dir + dt}
+move dt ant = ant{position = (x + dx, y + dy), direction = dir + tr * dt}
   where
+    Ant{position = (x, y), direction = dir, turnRate = tr} = ant
     dx = speed * dt * cos dir
     dy = speed * dt * sin dir
     speed = 20
