@@ -8,14 +8,18 @@ main =
     refreshRate = 60
     startWorld =
         [ Ant{position = (0, 0), direction = (-pi) / 4, turnRate = pi / 8}
-        , Ant{position = (-30, -30), direction = 3 * pi / 4, turnRate = (-pi) / 3}
+        , Ant { position = (-30, -30)
+              , direction = 3 * pi / 4
+              , turnRate = (-pi) / 3
+              }
         , Ant{position = (20, 40), direction = pi / 3, turnRate = pi / 4}
         ]
 
 type Angle = Float
 type RadiansPerSecond = Float
 
-data Ant = Ant{position :: !Point, direction :: !Angle, turnRate :: !RadiansPerSecond}
+data Ant = Ant
+    {position :: !Point, direction :: !Angle, turnRate :: !RadiansPerSecond}
 
 type World = [Ant]
 
