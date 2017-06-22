@@ -28,17 +28,14 @@ drawAnt Ant{position = (x, y)} =
     translate x y $ color red $ rectangleSolid 10 10
 
 draw :: World -> Picture
-draw world = pictures $ map drawAnt ants
-  where
-    ants = world
+draw ants = pictures $ map drawAnt ants
 
 onEvent :: Event -> World -> World
 onEvent _ world = world
 
 onTick :: Float -> World -> World
-onTick dt world = map move' ants
+onTick dt ants = map move' ants
   where
-    ants = world
     move' ant = move dt ant
 
 move :: Float -> Ant -> Ant
