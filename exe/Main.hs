@@ -28,15 +28,15 @@ radiansToDegrees rAngle = rAngle * 180 / pi
 
 drawAnt :: Ant -> Picture
 drawAnt Ant{position = (x, y), direction = z} =
-    translate x y $ color red $ rotate (90 - radiansToDegrees (z)) antFigure
+    translate x y $ color red $ rotate (-radiansToDegrees z) antFigure
   where
-    antFigure = pictures [
-        polygon [
-            ( 0 ,  5)
+    antFigure = pictures
+      [ polygon
+          [ ( 5 ,  0)
           , (-5 , -5)
-          , ( 5 , -5)
+          , (-5 ,  5)
           ]
-      , translate 0 (-5) $ circle 5
+      , translate (-5) 0 $ circle 5
       ]
 
 draw :: World -> Picture
