@@ -23,9 +23,21 @@ data Ant = Ant
 
 type World = [Ant]
 
+radiansToDegrees :: Float -> Float
+radiansToDegrees rAngle = rAngle * 180 / pi
+
 drawAnt :: Ant -> Picture
-drawAnt Ant{position = (x, y)} =
-    translate x y $ color red $ rectangleSolid 10 10
+drawAnt Ant{position = (x, y), direction = z} =
+    translate x y $ color red $ rotate (90 - radiansToDegrees (z)) antFigure
+  where
+    antFigure = pictures [
+        polygon [
+            ( 0 ,  5)
+          , (-5 , -5)
+          , ( 5 , -5)
+          ]
+      , translate 0 (-5) $ circle 5
+      ]
 
 draw :: World -> Picture
 draw ants = pictures $ map drawAnt ants
