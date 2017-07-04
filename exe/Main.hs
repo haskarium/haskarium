@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase     #-}
+{-# LANGUAGE NamedFieldPuns #-}
+
 import           Graphics.Gloss.Interface.Pure.Game
 
 main :: IO ()
@@ -23,7 +26,7 @@ main =
               { position = (20, 40)
               , direction = pi / 3
               , turnRate = pi / 4
-              , species = Ant
+              , species = Flea{idleTime = 0}
               }
         ]
 
@@ -37,7 +40,7 @@ data Creature = Creature
     , species   :: !Species
     }
 
-data Species = Ant | Fly
+data Species = Ant | Flea{idleTime :: !Float} | Fly
 
 type World = [Creature]
 
@@ -45,33 +48,38 @@ radiansToDegrees :: Float -> Float
 radiansToDegrees rAngle = rAngle * 180 / pi
 
 drawCreature :: Creature -> Picture
-drawCreature Creature{position = (x, y), direction = z, species = s} =
-    translate x y $ rotate (- radiansToDegrees z) figure
-  where
-    figure = case s of
-        Ant -> antFigure
-        Fly -> flyFigure
-    antFigure =
+drawCreature Creature{position = (x, y), direction, species} =
+    translate x y $
+    rotate (- radiansToDegrees direction) $
+    figure species
+
+figure :: Species -> Picture
+figure = \case
+    Ant{} ->
         color red $
         pictures
-            [ polygon
-                [ ( 5,  0)
-                , (-5, -5)
-                , (-5,  5)
-                ]
+            [ triangleBody
             , translate (-5) 0 $ circle 5
             ]
-    flyFigure =
+    Flea{} ->
+        color blue $
+        pictures
+            [ triangleBody
+            , translate (-5) 0 $ circle 5
+            ]
+    Fly{} ->
         color green $
         pictures
-            [ polygon
-                [ ( 5,  0)
-                , (-5, -5)
-                , (-5,  5)
-                ]
-            , translate 5  5 $ circle 5
+            [ triangleBody
+            , translate 5   5  $ circle 5
             , translate 5 (-5) $ circle 5
             ]
+  where
+    triangleBody = polygon
+        [ ( 5,  0)
+        , (-5, -5)
+        , (-5,  5)
+        ]
 
 draw :: World -> Picture
 draw creatures = pictures $ map drawCreature creatures
@@ -80,18 +88,35 @@ onEvent :: Event -> World -> World
 onEvent _ world = world
 
 onTick :: Float -> World -> World
-onTick dt creatures = map move' creatures
+onTick dt creatures = map update' creatures
   where
-    move' creature = move dt creature
+    update' creature = updateCreature dt creature
 
-move :: Float -> Creature -> Creature
-move dt creature = creature
-    {position = (x + dx, y + dy), direction = dir + tr * dt}
+updateCreature :: Float -> Creature -> Creature
+updateCreature dt creature = case species of
+    Ant            -> run 20
+    Fly            -> run 200
+    Flea{idleTime} -> jump idleTime 100
   where
-    Creature{position = (x, y), direction = dir, turnRate = tr, species = s} =
+    Creature{position = (x, y), direction, turnRate, species} =
         creature
-    dx = speed * dt * cos dir
-    dy = speed * dt * sin dir
-    speed = case s of
-        Ant -> 20
-        Fly -> 100
+    run speed = creatureMovedTurned dx dy
+      where
+        dx = speed * dt * cos direction
+        dy = speed * dt * sin direction
+    creatureMovedTurned dx dy = creature
+        { position = (x + dx, y + dy)
+        , direction = direction + turnRate * dt
+        }
+    jump idleTime distance =
+        if idleTime < fleaMaxIdleTime then
+            (creatureMovedTurned 0 0){species = Flea{idleTime = idleTime + dt}}
+        else let
+            dx = distance * cos direction
+            dy = distance * sin direction
+            in
+            (creatureMovedTurned dx dy)
+                {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
+
+fleaMaxIdleTime :: Float
+fleaMaxIdleTime = 2
