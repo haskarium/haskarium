@@ -28,6 +28,14 @@ main =
               , turnRate = pi / 4
               , species = Flea{idleTime = 0}
               }
+        , Creature
+              { position = (10, 20)
+              , direction = 0
+              , turnRate = - pi / 32
+              , species = Centipede
+                  { segments = [ (10, 20) | _ <- [1..10] ]
+                  }
+              }
         ]
 
 type Angle = Float
@@ -40,7 +48,7 @@ data Creature = Creature
     , species   :: !Species
     }
 
-data Species = Ant | Flea{idleTime :: !Float} | Fly
+data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede {segments :: [Point]}
 
 type World = [Creature]
 
@@ -48,6 +56,13 @@ radiansToDegrees :: Float -> Float
 radiansToDegrees rAngle = rAngle * 180 / pi
 
 drawCreature :: Creature -> Picture
+drawCreature Creature{position, species=(Centipede segments)} =
+    pictures $ map draw (position : segments)
+  where
+    draw (x, y) =
+      translate x y $
+      color orange $
+      circleSolid 7
 drawCreature Creature{position = (x, y), direction, species} =
     translate x y $
     rotate (- radiansToDegrees direction) $
@@ -74,6 +89,8 @@ figure = \case
             , translate 5   5  $ circle 5
             , translate 5 (-5) $ circle 5
             ]
+    _ ->
+        blank
   where
     triangleBody = polygon
         [ ( 5,  0)
@@ -97,6 +114,7 @@ updateCreature dt creature = case species of
     Ant            -> run 20
     Fly            -> run 200
     Flea{idleTime} -> jump idleTime 100
+    Centipede{}    -> updateCentipede
   where
     Creature{position = (x, y), direction, turnRate, species} =
         creature
@@ -117,6 +135,21 @@ updateCreature dt creature = case species of
             in
             (creatureMovedTurned dx dy)
                 {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
+
+    updateCentipede = runHead { species = Centipede{segments=newSegments} }
+      where
+        Centipede{segments} = species
+
+        runHead = run 6
+
+        newSegments = runChain [] (position runHead) segments
+
+        runChain acc _ [] = acc
+        runChain acc (px, py) (cur@(cx, cy) : next) =
+            let nx = px * 0.075 + cx * 0.925
+                ny = py * 0.075 + cy * 0.925
+                np = (nx, ny)
+            in runChain (np : acc) cur next
 
 fleaMaxIdleTime :: Float
 fleaMaxIdleTime = 2
