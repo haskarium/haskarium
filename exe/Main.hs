@@ -4,6 +4,7 @@
 import          Graphics.Gloss.Interface.Pure.Game
 import          System.Random
 
+main :: IO ()
 main = do
     g <- newStdGen
     let startWorld = World{randomGen = g, creatures = cs}
@@ -101,7 +102,7 @@ onTick dt w@World{creatures} = foldr (updateCreature dt) w{creatures = []} creat
 
 updateCreature :: Float -> Creature -> World -> World
 updateCreature dt c@Creature{species} World{randomGen = g, creatures = cs} =
-    World{randomGen = g', creatures = (c' : cs)}
+    World{randomGen = g', creatures = c' : cs}
   where
     (g', c') = turn g dt $ move dt c
     move = case species of
