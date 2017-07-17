@@ -98,7 +98,11 @@ onEvent :: Event -> World -> World
 onEvent _ world = world
 
 onTick :: Float -> World -> World
-onTick dt w@World{creatures} = foldr (updateCreature dt) w{creatures = []} creatures
+onTick dt w@World{creatures} = updateCreatures dt w{creatures = []} $ reverse creatures
+
+updateCreatures :: Float -> World -> [Creature] -> World
+updateCreatures _ world [] = world
+updateCreatures dt world (c:cs) = updateCreatures dt (updateCreature dt c world) cs
 
 updateCreature :: Float -> Creature -> World -> World
 updateCreature dt c@Creature{species} World{randomGen = g, creatures = cs} =
