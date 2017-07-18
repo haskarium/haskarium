@@ -2,33 +2,20 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 import           Graphics.Gloss.Interface.Pure.Game
+import           System.Random (StdGen, newStdGen, randomR)
 
 main :: IO ()
-main =
+main = do
+    g <- newStdGen
+    let (_g', startWorld) = makeCreatures g
+                                          (fromIntegral width / 2, fromIntegral height / 2)
+                                          [Fly, Flea{idleTime = 0}, Ant]
     play display white refreshRate startWorld draw onEvent onTick
   where
-    display = InWindow "haskarium" (800, 600) (0, 0)
+    display = InWindow "haskarium" (width, height) (0, 0)
     refreshRate = 60
-    startWorld =
-        [ Creature
-              { position = (0, 0)
-              , direction = - pi / 4
-              , turnRate = pi / 8
-              , species = Ant
-              }
-        , Creature
-              { position = (-30, -30)
-              , direction = 3 * pi / 4
-              , turnRate = - pi / 3
-              , species = Fly
-              }
-        , Creature
-              { position = (20, 40)
-              , direction = pi / 3
-              , turnRate = pi / 4
-              , species = Flea{idleTime = 0}
-              }
-        ]
+    width = 800
+    height = 600
 
 type Angle = Float
 type RadiansPerSecond = Float
@@ -43,6 +30,19 @@ data Creature = Creature
 data Species = Ant | Flea{idleTime :: !Float} | Fly
 
 type World = [Creature]
+
+makeCreatures :: StdGen -> (Float, Float) -> [Species] -> (StdGen, [Creature])
+makeCreatures g window species = makeCreatures' [] g species
+  where
+    (maxX, maxY) = window
+    makeCreatures' creatures g0 [] = (g0, creatures)
+    makeCreatures' creatures g0 (s : ss) = makeCreatures' (c : creatures) g4 ss
+      where
+        c = Creature{position = (x, y), direction = dir, turnRate = tr, species = s}
+        (x, g1) = randomR (-maxX, maxX) g0
+        (y, g2) = randomR (-maxY, maxY) g1
+        (dir, g3) = randomR (0, 2 * pi) g2
+        (tr, g4) = randomR (pi / 4, pi / 2) g3
 
 radiansToDegrees :: Float -> Float
 radiansToDegrees rAngle = rAngle * 180 / pi
