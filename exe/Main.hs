@@ -1,15 +1,15 @@
 {-# LANGUAGE LambdaCase     #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-import          Graphics.Gloss.Interface.Pure.Game
-import          System.Random
+import           Graphics.Gloss.Interface.Pure.Game
+import           System.Random (StdGen, newStdGen, randomR)
 
 main :: IO ()
 main = do
     g <- newStdGen
     let (_g', startWorld) = makeCreatures g
                                           (fromIntegral width / 2, fromIntegral height / 2)
-                                          [Ant, Fly, Flea{idleTime = 0}]
+                                          [Fly, Flea{idleTime = 0}, Ant]
     play display white refreshRate startWorld draw onEvent onTick
   where
     display = InWindow "haskarium" (width, height) (0, 0)
@@ -32,10 +32,11 @@ data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede {segments :: [Po
 type World = [Creature]
 
 makeCreatures :: StdGen -> (Float, Float) -> [Species] -> (StdGen, [Creature])
-makeCreatures g window species = makeCreatures' g window [] species
+makeCreatures g window species = makeCreatures' [] g species
   where
-    makeCreatures' g0 _ creatures [] = (g0, creatures)
-    makeCreatures' g0 (maxX, maxY) creatures (s : ss) = makeCreatures' g4 (maxX, maxY) (c : creatures) ss
+    (maxX, maxY) = window
+    makeCreatures' creatures g0 [] = (g0, creatures)
+    makeCreatures' creatures g0 (s : ss) = makeCreatures' (c : creatures) g4 ss
       where
         c = Creature{position = (x, y), direction = dir, turnRate = tr, species = s}
         (x, g1) = randomR (-maxX, maxX) g0
