@@ -3,6 +3,15 @@
 
 import           Graphics.Gloss.Interface.Pure.Game
 import           System.Random                      (StdGen, newStdGen, randomR)
+import           Graphics.Gloss.Geometry.Line
+import           Graphics.Gloss.Geometry.Angle
+import           Data.Maybe
+
+width :: Int
+width = 800
+
+height :: Int
+height = 600
 
 main :: IO ()
 main = do
@@ -16,8 +25,6 @@ main = do
   where
     display = InWindow "haskarium" (width, height) (0, 0)
     refreshRate = 60
-    width = 800
-    height = 600
 
 type Angle = Float
 type RadiansPerSecond = Float
@@ -27,6 +34,7 @@ data Creature = Creature
     , direction :: !Angle
     , turnRate  :: !RadiansPerSecond
     , species   :: !Species
+    , size      :: !Float
     }
 
 data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede {segments :: [Point]}
@@ -40,7 +48,11 @@ makeCreatures g window species = makeCreatures' [] g species
     makeCreatures' creatures g0 [] = (g0, creatures)
     makeCreatures' creatures g0 (s : ss) = makeCreatures' (c : creatures) g5 ss
       where
-        c = Creature{position = (x, y), direction = dir, turnRate = tr, species = s'}
+        c = Creature{ position = (x, y)
+                    , direction = dir
+                    , turnRate = tr
+                    , species = s'
+                    , size = 10}
         (x, g1) = randomR (-maxX, maxX) g0
         (y, g2) = randomR (-maxY, maxY) g1
         (dir, g3) = randomR (0, 2 * pi) g2
@@ -123,26 +135,20 @@ updateCreature dt creature = case species of
     Flea{idleTime} -> jump idleTime 100
     Centipede{}    -> updateCentipede
   where
-    Creature{position = (x, y), direction, turnRate, species} =
+    Creature{turnRate = turnRate, species = species} =
         creature
-    run speed = creatureMovedTurned dx dy
+    ddir = turnRate * dt
+    run speed = creatureTurn (creatureMovedCheckCollisions creature len) ddir
       where
-        dx = speed * dt * cos direction
-        dy = speed * dt * sin direction
-    creatureMovedTurned dx dy = creature
-        { position = (x + dx, y + dy)
-        , direction = direction + turnRate * dt
-        }
+        len = dt * speed
     jump idleTime dist =
         if idleTime < fleaMaxIdleTime then
-            (creatureMovedTurned 0 0){species = Flea{idleTime = idleTime + dt}}
-        else let
-            dx = dist * cos direction
-            dy = dist * sin direction
-            in
-            (creatureMovedTurned dx dy)
-                {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
-
+            creatureTurn creature{species = Flea{idleTime = idleTime + dt}} ddir
+        else
+            creatureTurn
+                ((creatureMovedCheckCollisions creature dist)
+                    {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}})
+                ddir
     updateCentipede = runHead { species = Centipede{segments=newSegments} }
       where
         Centipede{segments} = species
@@ -177,3 +183,56 @@ distance (x1, y1) (x2, y2) =
 
 centipedeSegmentRadius :: Float
 centipedeSegmentRadius = 7
+
+creatureTurn :: Creature -> Float -> Creature
+creatureTurn creature ddir = creature{ direction = direction + ddir}
+  where
+    Creature{direction = direction} = creature
+
+creatureMovedCheckCollisions :: Creature -> Float -> Creature
+creatureMovedCheckCollisions creature dist
+    | dist <= 0  = creature
+    | otherwise =
+        if isNothing collision
+        then creatureMoved creature dist
+        else case species of
+                Flea{} -> creatureMoved creature distToCol
+                _      -> creatureMovedCheckCollisions
+                              (creatureMoved creature distToCol)
+                                  {direction = new_dir}
+                              (dist - distToCol)
+      where
+        Creature{position, species = species} = creature
+        collision = checkCollisions creature dist
+        new_dir = snd $ fromJust collision
+        distToCol = distance position (fst $ fromJust collision)
+
+creatureMoved :: Creature -> Float -> Creature
+creatureMoved creature dist =
+    creature { position = pointMoved (x, y) dist direction }
+  where
+    Creature{position = (x, y), direction = direction} = creature
+
+pointMoved :: Point -> Float -> Float-> Point
+pointMoved (x, y) dist direction = (x + dx, y + dy)
+  where
+    dx = dist * cos direction
+    dy = dist * sin direction
+
+checkCollisions :: Creature -> Float -> Maybe (Point, Float)
+checkCollisions Creature{position = (x, y), direction = dir, size = size} dist
+    | isJust pU && ndir < pi                = Just (fromJust pU, -dir)
+    | isJust pD && ndir > pi                = Just (fromJust pD, -dir)
+    | isJust pL
+      && ndir > pi/2 && ndir < 3 * pi / 2   = Just (fromJust pL, pi - dir)
+    | isJust pR
+      && (ndir < pi/2 || ndir > 3 * pi / 2) = Just (fromJust pR, pi - dir)
+    | otherwise = Nothing
+  where
+    ndir = normalizeAngle dir
+    p0 = (x, y)
+    p1 = pointMoved p0 dist dir
+    pU = intersectSegHorzLine p0 p1 ((fromIntegral height / 2) - size / 2)
+    pD = intersectSegHorzLine p0 p1 ((- fromIntegral height / 2) - size / 2)
+    pL = intersectSegVertLine p0 p1 ((- fromIntegral width / 2) - size / 2)
+    pR = intersectSegVertLine p0 p1 ((fromIntegral width / 2) - size / 2)
