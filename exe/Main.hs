@@ -233,6 +233,6 @@ checkCollisions Creature{position = (x, y), direction = dir, size = size} dist
     p0 = (x, y)
     p1 = pointMoved p0 dist dir
     pU = intersectSegHorzLine p0 p1 ((fromIntegral height / 2) - size / 2)
-    pD = intersectSegHorzLine p0 p1 ((- fromIntegral height / 2) - size / 2)
-    pL = intersectSegVertLine p0 p1 ((- fromIntegral width / 2) - size / 2)
+    pD = intersectSegHorzLine p0 p1 ((- fromIntegral height / 2) + size / 2)
+    pL = intersectSegVertLine p0 p1 ((- fromIntegral width / 2) + size / 2)
     pR = intersectSegVertLine p0 p1 ((fromIntegral width / 2) - size / 2)
