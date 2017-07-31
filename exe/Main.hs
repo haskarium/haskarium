@@ -221,15 +221,17 @@ pointMoved (x, y) dist direction = (x + dx, y + dy)
 
 checkCollisions :: Creature -> Float -> Maybe (Point, Float)
 checkCollisions Creature{position = (x, y), direction = dir, size = size} dist
-    | isJust pU && ndir < pi                = Just (fromJust pU, -dir)
-    | isJust pD && ndir > pi                = Just (fromJust pD, -dir)
-    | isJust pL
-      && ndir > pi/2 && ndir < 3 * pi / 2   = Just (fromJust pL, pi - dir)
-    | isJust pR
-      && (ndir < pi/2 || ndir > 3 * pi / 2) = Just (fromJust pR, pi - dir)
-    | otherwise = Nothing
+    | isUpBorder    = Just (fromJust pU, -dir)
+    | isDownBorder  = Just (fromJust pD, -dir)
+    | isLeftBorder  = Just (fromJust pL, pi - dir)
+    | isRightBorder = Just (fromJust pR, pi - dir)
+    | otherwise     = Nothing
   where
     ndir = normalizeAngle dir
+    isUpBorder = isJust pU && ndir < pi
+    isDownBorder = isJust pD && ndir > pi
+    isLeftBorder = isJust pL && ndir > pi/2 && ndir < 3 * pi / 2
+    isRightBorder = isJust pR && (ndir < pi/2 || ndir > 3 * pi / 2)
     p0 = (x, y)
     p1 = pointMoved p0 dist dir
     pU = intersectSegHorzLine p0 p1 ((fromIntegral height / 2) - size / 2)
