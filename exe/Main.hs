@@ -2,14 +2,16 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 import           Graphics.Gloss.Interface.Pure.Game
-import           System.Random (StdGen, newStdGen, randomR)
+import           System.Random                      (StdGen, newStdGen, randomR)
 
 main :: IO ()
 main = do
     g <- newStdGen
-    let (_g', startWorld) = makeCreatures g
-                                          (fromIntegral width / 2, fromIntegral height / 2)
-                                          [Fly, Flea{idleTime = 0}, Ant]
+    let (_g', startWorld) =
+            makeCreatures
+                g
+                (fromIntegral width / 2, fromIntegral height / 2)
+                [Fly, Flea{idleTime = 0}, Ant]
     play display white refreshRate startWorld draw onEvent onTick
   where
     display = InWindow "haskarium" (width, height) (0, 0)
