@@ -33,7 +33,7 @@ main =
               , direction = 0
               , turnRate = - pi / 32
               , species = Centipede
-                  { segments = [ (10, 20) | _ <- [1..10] ]
+                  { segments = [ (10, 20) | _ <- [1..10 :: Int] ]
                   }
               }
         ]
@@ -56,13 +56,13 @@ radiansToDegrees :: Float -> Float
 radiansToDegrees rAngle = rAngle * 180 / pi
 
 drawCreature :: Creature -> Picture
-drawCreature Creature{position, species=(Centipede segments)} =
-    pictures $ map draw (position : segments)
+drawCreature Creature{position, species = Centipede segments} =
+    pictures $ map draw' (position : segments)
   where
-    draw (x, y) =
+    draw' (x, y) =
       translate x y $
       color orange $
-      circleSolid 7
+      circleSolid centipedeSegmentRadius
 drawCreature Creature{position = (x, y), direction, species} =
     translate x y $
     rotate (- radiansToDegrees direction) $
@@ -126,12 +126,12 @@ updateCreature dt creature = case species of
         { position = (x + dx, y + dy)
         , direction = direction + turnRate * dt
         }
-    jump idleTime distance =
+    jump idleTime dist =
         if idleTime < fleaMaxIdleTime then
             (creatureMovedTurned 0 0){species = Flea{idleTime = idleTime + dt}}
         else let
-            dx = distance * cos direction
-            dy = distance * sin direction
+            dx = dist * cos direction
+            dy = dist * sin direction
             in
             (creatureMovedTurned dx dy)
                 {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
@@ -142,14 +142,31 @@ updateCreature dt creature = case species of
 
         runHead = run 6
 
-        newSegments = runChain [] (position runHead) segments
+        newSegments = runChain (position runHead) segments
 
-        runChain acc _ [] = acc
-        runChain acc (px, py) (cur@(cx, cy) : next) =
-            let nx = px * 0.075 + cx * 0.925
-                ny = py * 0.075 + cy * 0.925
-                np = (nx, ny)
-            in runChain (np : acc) cur next
+        runChain _ [] = []
+        runChain p@(px, py) (c@(cx, cy) : next) =
+            let
+            dist = distance p c
+            c' =
+                if dist < maxNeck then
+                    c
+                else let
+                    dist' = maxNeck
+                    squeezeFactor = dist / dist'
+                    cx' = px - (px - cx) / squeezeFactor
+                    cy' = py - (py - cy) / squeezeFactor
+                    in (cx', cy')
+            in c' : runChain c' next
+
+        maxNeck = 1.5 * centipedeSegmentRadius
 
 fleaMaxIdleTime :: Float
 fleaMaxIdleTime = 2
+
+distance :: Point -> Point -> Float
+distance (x1, y1) (x2, y2) =
+    sqrt $ (x1 - x2) ^ (2 :: Int) + (y1 - y2) ^ (2 :: Int)
+
+centipedeSegmentRadius :: Float
+centipedeSegmentRadius = 7
