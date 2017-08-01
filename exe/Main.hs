@@ -2,41 +2,22 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 import           Graphics.Gloss.Interface.Pure.Game
+import           System.Random                      (StdGen, newStdGen, randomR)
 
 main :: IO ()
-main =
+main = do
+    g <- newStdGen
+    let (_g', startWorld) =
+            makeCreatures
+                g
+                (fromIntegral width / 2, fromIntegral height / 2)
+                [Fly, Flea{idleTime = 0}, Ant, Centipede{segments=[]}]
     play display white refreshRate startWorld draw onEvent onTick
   where
-    display = InWindow "haskarium" (800, 600) (0, 0)
+    display = InWindow "haskarium" (width, height) (0, 0)
     refreshRate = 60
-    startWorld =
-        [ Creature
-              { position = (0, 0)
-              , direction = - pi / 4
-              , turnRate = pi / 8
-              , species = Ant
-              }
-        , Creature
-              { position = (-30, -30)
-              , direction = 3 * pi / 4
-              , turnRate = - pi / 3
-              , species = Fly
-              }
-        , Creature
-              { position = (20, 40)
-              , direction = pi / 3
-              , turnRate = pi / 4
-              , species = Flea{idleTime = 0}
-              }
-        , Creature
-              { position = (10, 20)
-              , direction = 0
-              , turnRate = - pi / 32
-              , species = Centipede
-                  { segments = [ (10, 20) | _ <- [1..10 :: Int] ]
-                  }
-              }
-        ]
+    width = 800
+    height = 600
 
 type Angle = Float
 type RadiansPerSecond = Float
@@ -51,6 +32,32 @@ data Creature = Creature
 data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede {segments :: [Point]}
 
 type World = [Creature]
+
+makeCreatures :: StdGen -> (Float, Float) -> [Species] -> (StdGen, [Creature])
+makeCreatures g window species = makeCreatures' [] g species
+  where
+    (maxX, maxY) = window
+    makeCreatures' creatures g0 [] = (g0, creatures)
+    makeCreatures' creatures g0 (s : ss) = makeCreatures' (c : creatures) g5 ss
+      where
+        c = Creature{position = (x, y), direction = dir, turnRate = tr, species = s'}
+        (x, g1) = randomR (-maxX, maxX) g0
+        (y, g2) = randomR (-maxY, maxY) g1
+        (dir, g3) = randomR (0, 2 * pi) g2
+        (tr, g4) = case s of
+            Centipede{} ->
+                randomR (-pi / 34, -pi / 30) g3
+            _ ->
+                randomR (pi / 4, pi / 2) g3
+        (s', g5) = case s of
+            Centipede{} ->
+                let (numSegments, gN) = randomR (5, 15) g4
+                in (Centipede{segments = replicate numSegments (x, y)}, gN)
+            Flea{} ->
+                let (eagerness, gN) = randomR (0.0, 1.0) g4
+                in (Flea{idleTime = eagerness}, gN)
+            _ ->
+                (s, g4)
 
 radiansToDegrees :: Float -> Float
 radiansToDegrees rAngle = rAngle * 180 / pi
