@@ -1,11 +1,11 @@
 {-# LANGUAGE LambdaCase     #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
+import           Graphics.Gloss.Geometry.Angle      (normalizeAngle, radToDeg)
+import           Graphics.Gloss.Geometry.Line       (intersectSegHorzLine,
+                                                     intersectSegVertLine)
 import           Graphics.Gloss.Interface.Pure.Game
 import           System.Random                      (StdGen, newStdGen, randomR)
-import           Graphics.Gloss.Geometry.Line       ( intersectSegHorzLine
-                                                    , intersectSegVertLine)
-import           Graphics.Gloss.Geometry.Angle      (radToDeg, normalizeAngle)
 
 width :: Int
 width = 800
@@ -18,8 +18,8 @@ main = do
     g <- newStdGen
     let (_g', startWorld) =
             makeCreatures
-                g
                 (fromIntegral width / 2, fromIntegral height / 2)
+                g
                 [Fly, Flea{idleTime = 0}, Ant, Centipede{segments=[]}]
     play display white refreshRate startWorld draw onEvent onTick
   where
@@ -37,12 +37,12 @@ data Creature = Creature
     , size      :: !Float
     }
 
-data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede {segments :: [Point]}
+data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
 
 type World = [Creature]
 
-makeCreatures :: StdGen -> (Float, Float) -> [Species] -> (StdGen, [Creature])
-makeCreatures g window species = makeCreatures' [] g species
+makeCreatures :: (Float, Float) -> StdGen -> [Species] -> (StdGen, [Creature])
+makeCreatures window = makeCreatures' []
   where
     (maxX, maxY) = window
     makeCreatures' creatures g0 [] = (g0, creatures)
@@ -77,11 +77,11 @@ drawCreature Creature{position, species = Centipede segments} =
     pictures $ map draw' (position : segments)
   where
     draw' (x, y) =
-      translate x y $
+      translate x y .
       color orange $
       circleSolid centipedeSegmentRadius
 drawCreature Creature{position = (x, y), direction, species} =
-    translate x y $
+    translate x y .
     rotate (- radToDeg direction) $
     figure species
 
@@ -116,15 +116,13 @@ figure = \case
         ]
 
 draw :: World -> Picture
-draw creatures = pictures $ map drawCreature creatures
+draw = pictures . map drawCreature
 
 onEvent :: Event -> World -> World
-onEvent _ world = world
+onEvent _ = id
 
 onTick :: Float -> World -> World
-onTick dt creatures = map update' creatures
-  where
-    update' creature = updateCreature dt creature
+onTick = map . updateCreature
 
 updateCreature :: Float -> Creature -> Creature
 updateCreature dt creature@Creature{turnRate, species} =
@@ -221,7 +219,7 @@ checkCollisions Creature{position = p0, direction, size} dist =
     checkDirs _ (Just pd) _ _ | isMovedDown  = Just (pd, -direction)
     checkDirs _ _ (Just pl) _ | isMovedLeft  = Just (pl, pi - direction)
     checkDirs _ _ _ (Just pr) | isMovedRight = Just (pr, pi - direction)
-    checkDirs _ _ _ _                        = Nothing
+    checkDirs _ _ _ _         = Nothing
     normDir = normalizeAngle direction
     isMovedUp = normDir < pi
     isMovedDown = normDir > pi
