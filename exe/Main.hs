@@ -42,11 +42,10 @@ data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Po
 type World = [Creature]
 
 makeCreatures :: (Float, Float) -> StdGen -> [Species] -> (StdGen, [Creature])
-makeCreatures window = makeCreatures' []
+makeCreatures window g = foldr makeCreatures' (g, [])
   where
     (maxX, maxY) = window
-    makeCreatures' creatures g0 [] = (g0, creatures)
-    makeCreatures' creatures g0 (s : ss) = makeCreatures' (c : creatures) g5 ss
+    makeCreatures' species (g0, creatures) = (g5, c : creatures)
       where
         fake_size = 10  -- TODO: add real creature sizes
         c = Creature{ position = (x, y)
@@ -57,12 +56,12 @@ makeCreatures window = makeCreatures' []
         (x, g1) = randomR (-maxX + fake_size / 2, maxX - fake_size / 2) g0
         (y, g2) = randomR (-maxY + fake_size / 2, maxY - fake_size / 2) g1
         (dir, g3) = randomR (0, 2 * pi) g2
-        (tr, g4) = case s of
+        (tr, g4) = case species of
             Centipede{} ->
                 randomR (-pi / 34, -pi / 30) g3
             _ ->
                 randomR (pi / 4, pi / 2) g3
-        (s', g5) = case s of
+        (s', g5) = case species of
             Centipede{} ->
                 let (numSegments, gN) = randomR (5, 15) g4
                 in (Centipede{segments = replicate numSegments (x, y)}, gN)
@@ -70,7 +69,7 @@ makeCreatures window = makeCreatures' []
                 let (eagerness, gN) = randomR (0.0, 1.0) g4
                 in (Flea{idleTime = eagerness}, gN)
             _ ->
-                (s, g4)
+                (species, g4)
 
 drawCreature :: Creature -> Picture
 drawCreature Creature{position, species = Centipede segments} =
