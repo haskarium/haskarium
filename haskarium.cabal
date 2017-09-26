@@ -7,6 +7,10 @@ build-type: Simple
 executable haskarium-view
     hs-source-dirs: exe
     main-is: Main.hs
+    other-modules:  Haskarium.Const
+                    Haskarium.Motion
+                    Haskarium.Types
+                    Haskarium.Util
     build-depends:  base
                   , gloss
                   , random
