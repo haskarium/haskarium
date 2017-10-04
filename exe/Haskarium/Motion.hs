@@ -98,7 +98,7 @@ checkCollisions Creature{position = p0, direction, size} dist =
     checkDirs _ (Just pd) _ _ | isMovedDown  = Just (pd, -direction)
     checkDirs _ _ (Just pl) _ | isMovedLeft  = Just (pl, pi - direction)
     checkDirs _ _ _ (Just pr) | isMovedRight = Just (pr, pi - direction)
-    checkDirs _ _ _ _         = Nothing
+    checkDirs _ _ _ _                        = Nothing
     normDir = normalizeAngle direction
     isMovedUp = normDir < pi
     isMovedDown = normDir > pi
