@@ -4,15 +4,14 @@ module Haskarium.Motion
     ( updateCreature
     ) where
 
-import           Graphics.Gloss.Geometry.Angle      (normalizeAngle)
-import           Graphics.Gloss.Geometry.Line       (intersectSegHorzLine,
-                                                     intersectSegVertLine)
+import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
+import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
+                                               intersectSegVertLine)
 import           Graphics.Gloss.Interface.Pure.Game (Point)
 
 import           Haskarium.Const
-import           Haskarium.Types                    (Creature (..),
-                                                     Species (..))
-import           Haskarium.Util                     (distance)
+import           Haskarium.Types (Creature (..), Species (..))
+import           Haskarium.Util (distance)
 
 updateCreature :: Float -> Creature -> Creature
 updateCreature dt creature@Creature{turnRate, species} =

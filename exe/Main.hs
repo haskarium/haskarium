@@ -1,14 +1,13 @@
-{-# LANGUAGE LambdaCase     #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-import           Graphics.Gloss.Geometry.Angle      (radToDeg)
+import           Graphics.Gloss.Geometry.Angle (radToDeg)
 import           Graphics.Gloss.Interface.Pure.Game
-import           System.Random                      (StdGen, newStdGen, randomR)
+import           System.Random (StdGen, newStdGen, randomR)
 
 import           Haskarium.Const
-import           Haskarium.Motion                   (updateCreature)
-import           Haskarium.Types                    (Creature (..),
-                                                     Species (..), World)
+import           Haskarium.Motion (updateCreature)
+import           Haskarium.Types (Creature (..), Species (..), World)
 
 main :: IO ()
 main = do
