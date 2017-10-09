@@ -2,7 +2,7 @@ module Haskarium.Util
     ( distance
     ) where
 
-import           Graphics.Gloss.Interface.Pure.Game (Point)
+import           Graphics.Gloss (Point)
 
 distance :: Point -> Point -> Float
 distance (x1, y1) (x2, y2) =

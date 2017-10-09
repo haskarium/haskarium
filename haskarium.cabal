@@ -8,6 +8,7 @@ executable haskarium-view
     hs-source-dirs: exe
     main-is: Main.hs
     other-modules:  Haskarium.Const
+                    Haskarium.Draw
                     Haskarium.Motion
                     Haskarium.Types
                     Haskarium.Util

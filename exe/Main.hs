@@ -1,11 +1,11 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-import           Graphics.Gloss.Geometry.Angle (radToDeg)
-import           Graphics.Gloss.Interface.Pure.Game
+import           Graphics.Gloss (Display (InWindow), play, white)
+import           Graphics.Gloss.Interface.Pure.Game (Event)
 import           System.Random (StdGen, newStdGen, randomR)
 
-import           Haskarium.Const
+import           Haskarium.Const (height, width)
+import           Haskarium.Draw (draw)
 import           Haskarium.Motion (updateCreature)
 import           Haskarium.Types (Creature (..), Species (..), World)
 
@@ -51,52 +51,6 @@ makeCreatures window g = foldr makeCreatures' (g, [])
                 in (Flea{idleTime = eagerness}, gN)
             _ ->
                 (species, g4)
-
-drawCreature :: Creature -> Picture
-drawCreature Creature{position, species = Centipede segments} =
-    pictures $ map draw' (position : segments)
-  where
-    draw' (x, y) =
-      translate x y .
-      color orange $
-      circleSolid centipedeSegmentRadius
-drawCreature Creature{position = (x, y), direction, species} =
-    translate x y .
-    rotate (- radToDeg direction) $
-    figure species
-
-figure :: Species -> Picture
-figure = \case
-    Ant{} ->
-        color red $
-        pictures
-            [ triangleBody
-            , translate (-5) 0 $ circle 5
-            ]
-    Flea{} ->
-        color blue $
-        pictures
-            [ triangleBody
-            , translate (-5) 0 $ circle 5
-            ]
-    Fly{} ->
-        color green $
-        pictures
-            [ triangleBody
-            , translate 5   5  $ circle 5
-            , translate 5 (-5) $ circle 5
-            ]
-    _ ->
-        blank
-  where
-    triangleBody = polygon
-        [ ( 5,  0)
-        , (-5, -5)
-        , (-5,  5)
-        ]
-
-draw :: World -> Picture
-draw = pictures . map drawCreature
 
 onEvent :: Event -> World -> World
 onEvent _ = id

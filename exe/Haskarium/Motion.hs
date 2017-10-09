@@ -4,10 +4,10 @@ module Haskarium.Motion
     ( updateCreature
     ) where
 
+import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
-import           Graphics.Gloss.Interface.Pure.Game (Point)
 
 import           Haskarium.Const
 import           Haskarium.Types (Creature (..), Species (..))

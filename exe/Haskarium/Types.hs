@@ -4,7 +4,7 @@ module Haskarium.Types
     , World
     ) where
 
-import           Graphics.Gloss.Interface.Pure.Game (Point)
+import           Graphics.Gloss (Point)
 
 type Angle = Float
 type RadiansPerSecond = Float
@@ -17,6 +17,7 @@ data Creature = Creature
     , size      :: !Float
     }
 
-data Species = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
+data Species
+    = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
 
 type World = [Creature]
