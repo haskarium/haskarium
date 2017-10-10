@@ -11,7 +11,8 @@ import           Graphics.Gloss (Picture, blank, blue, circle, circleSolid,
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
 import           Haskarium.Const (centipedeSegmentRadius)
-import           Haskarium.Types (Creature (..), Species (..), World)
+import           Haskarium.Types (Creature (..), Species (..), SpeciesType (..),
+                                  World, speciesType)
 
 drawCreature :: Creature -> Picture
 drawCreature Creature{position, species = Centipede segments} =
@@ -23,24 +24,25 @@ drawCreature Creature{position, species = Centipede segments} =
       circleSolid centipedeSegmentRadius
 drawCreature Creature{position = (x, y), direction, species} =
     translate x y .
-    rotate (- radToDeg direction) $
-    figure species
+    rotate (- radToDeg direction) .
+    figure $
+    speciesType species
 
-figure :: Species -> Picture
+figure :: SpeciesType -> Picture
 figure = \case
-    Ant{} ->
+    SAnt ->
         color red $
         pictures
             [ triangleBody
             , translate (-5) 0 $ circle 5
             ]
-    Flea{} ->
+    SFlea ->
         color blue $
         pictures
             [ triangleBody
             , translate (-5) 0 $ circle 5
             ]
-    Fly{} ->
+    SFly ->
         color green $
         pictures
             [ triangleBody

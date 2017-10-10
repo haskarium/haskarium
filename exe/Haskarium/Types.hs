@@ -1,8 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Haskarium.Types
     ( Creature (..)
     , Species (..)
     , SpeciesType (..)
     , World
+    , speciesType
     ) where
 
 import           Graphics.Gloss (Point)
@@ -22,5 +25,12 @@ data Species
     = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
 
 data SpeciesType = SAnt | SCentipede | SFlea | SFly
+
+speciesType :: Species -> SpeciesType
+speciesType = \case
+    Ant{}       -> SAnt
+    Centipede{} -> SCentipede
+    Flea{}      -> SFlea
+    Fly{}       -> SFly
 
 type World = [Creature]
