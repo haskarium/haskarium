@@ -1,6 +1,7 @@
 module Haskarium.Types
     ( Creature (..)
     , Species (..)
+    , SpeciesType (..)
     , World
     ) where
 
@@ -19,5 +20,7 @@ data Creature = Creature
 
 data Species
     = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
+
+data SpeciesType = SAnt | SCentipede | SFlea | SFly
 
 type World = [Creature]

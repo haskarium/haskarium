@@ -6,16 +6,13 @@ import           Haskarium.Const (height, width)
 import           Haskarium.Draw (draw)
 import           Haskarium.Generate (makeCreatures)
 import           Haskarium.Motion (updateCreature)
-import           Haskarium.Types (Species (..), World)
+import           Haskarium.Types (SpeciesType (..), World)
 
 main :: IO ()
 main = do
     g <- newStdGen
     let (_g', startWorld) =
-            makeCreatures
-                window
-                g
-                [Fly, Flea{idleTime = 0}, Ant, Centipede{segments=[]}]
+            makeCreatures window g [SFly, SFlea, SAnt, SCentipede]
     play display white refreshRate startWorld draw onEvent onTick
   where
     window =
