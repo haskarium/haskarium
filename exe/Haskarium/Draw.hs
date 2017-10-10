@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
@@ -11,17 +12,32 @@ import           Graphics.Gloss (Picture, blank, blue, circle, circleSolid,
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
 import           Haskarium.Const (centipedeSegmentRadius)
-import           Haskarium.Types (Creature (..), Species (..), SpeciesType (..),
-                                  World, speciesType)
+import           Haskarium.Types (Ant, Centipede (..), Creature (..), Flea, Fly,
+                                  IsSpecies, SpeciesType (..), World (..),
+                                  speciesType)
 
-drawCreature :: Creature -> Picture
-drawCreature Creature{position, species = Centipede segments} =
-    pictures $ map draw' (position : segments)
-  where
-    draw' (x, y) =
-      translate x y .
-      color orange $
-      circleSolid centipedeSegmentRadius
+class Drawable a where
+    draw :: a -> Picture
+
+instance Drawable (Creature Centipede) where
+    draw Creature{position, species = Centipede segments} =
+        pictures $ map draw' (position : segments)
+      where
+        draw' (x, y) =
+          translate x y .
+          color orange $
+          circleSolid centipedeSegmentRadius
+
+instance Drawable (Creature Ant) where
+    draw = drawCreature
+
+instance Drawable (Creature Flea) where
+    draw = drawCreature
+
+instance Drawable (Creature Fly) where
+    draw = drawCreature
+
+drawCreature :: IsSpecies s => Creature s -> Picture
 drawCreature Creature{position = (x, y), direction, species} =
     translate x y .
     rotate (- radToDeg direction) .
@@ -58,5 +74,9 @@ figure = \case
         , (-5,  5)
         ]
 
-draw :: World -> Picture
-draw = pictures . map drawCreature
+instance Drawable World where
+    draw World{ants, centipedes, fleas, flies} = pictures $
+        map draw ants ++
+        map draw centipedes ++
+        map draw fleas ++
+        map draw flies

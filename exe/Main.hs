@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 import           Graphics.Gloss (Display (InWindow), play, white)
 import           Graphics.Gloss.Interface.Pure.Game (Event)
 import           System.Random (newStdGen)
@@ -6,13 +8,16 @@ import           Haskarium.Const (height, width)
 import           Haskarium.Draw (draw)
 import           Haskarium.Generate (makeCreatures)
 import           Haskarium.Motion (updateCreature)
-import           Haskarium.Types (SpeciesType (..), Time, World)
+import           Haskarium.Types (World (..))
 
 main :: IO ()
 main = do
-    g <- newStdGen
-    let (_g', startWorld) =
-            makeCreatures window g [SFly, SFlea, SAnt, SCentipede]
+    g0 <- newStdGen
+    let (g1, ants)        = makeCreatures window g0 1
+    let (g2, centipedes)  = makeCreatures window g1 1
+    let (g3, fleas)       = makeCreatures window g2 1
+    let (_g4, flies)      = makeCreatures window g3 1
+    let startWorld = World{ants, centipedes, fleas, flies}
     play display white refreshRate startWorld draw onEvent onTick
   where
     window =
@@ -25,5 +30,10 @@ main = do
 onEvent :: Event -> World -> World
 onEvent _ = id
 
-onTick :: Time -> World -> World
-onTick = map . updateCreature
+onTick :: Float -> World -> World
+onTick dt World{ants, centipedes, fleas, flies} = World
+    { ants        = map (updateCreature dt) ants
+    , centipedes  = map (updateCreature dt) centipedes
+    , fleas       = map (updateCreature dt) fleas
+    , flies       = map (updateCreature dt) flies
+    }

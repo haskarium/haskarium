@@ -1,16 +1,17 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Haskarium.Types
     ( Angle
     , RadiansPerSecond
+    , Ant (..)
+    , Centipede (..)
     , Creature (..)
     , Distance
-    , Species (..)
+    , Flea (..)
+    , Fly (..)
     , SpeciesType (..)
     , Speed
     , Time
-    , World
-    , speciesType
+    , World (..)
+    , IsSpecies (..)
     ) where
 
 import           Graphics.Gloss (Point)
@@ -21,24 +22,42 @@ type RadiansPerSecond = Float
 type Speed = Float
 type Time = Float
 
-data Creature = Creature
+data Creature species = Creature
     { position  :: !Point
     , direction :: !Angle
     , turnRate  :: !RadiansPerSecond
-    , species   :: !Species
+    , species   :: !species
     , size      :: !Distance
     }
 
-data Species
-    = Ant | Flea{idleTime :: !Time} | Fly | Centipede{segments :: ![Point]}
-
 data SpeciesType = SAnt | SCentipede | SFlea | SFly
 
-speciesType :: Species -> SpeciesType
-speciesType = \case
-    Ant{}       -> SAnt
-    Centipede{} -> SCentipede
-    Flea{}      -> SFlea
-    Fly{}       -> SFly
+class IsSpecies species where
+    speciesType :: species -> SpeciesType
 
-type World = [Creature]
+data Ant = Ant
+
+instance IsSpecies Ant where
+    speciesType _ = SAnt
+
+newtype Centipede = Centipede{segments :: [Point]}
+
+instance IsSpecies Centipede where
+    speciesType _ = SCentipede
+
+newtype Flea = Flea{idleTime :: Time}
+
+instance IsSpecies Flea where
+    speciesType _ = SFlea
+
+data Fly = Fly
+
+instance IsSpecies Fly where
+    speciesType _ = SFly
+
+data World = World
+    { ants :: [Creature Ant]
+    , centipedes :: [Creature Centipede]
+    , fleas :: [Creature Flea]
+    , flies :: [Creature Fly]
+    }

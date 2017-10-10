@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Haskarium.Motion
@@ -10,34 +12,49 @@ import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
 
 import           Haskarium.Const
-import           Haskarium.Types (Angle, Creature (..), Distance, Species (..),
-                                  Time)
+import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
+                                  Distance, Flea (..), Fly, IsSpecies,
+                                  SpeciesType (SFlea), Speed, Time, speciesType)
 import           Haskarium.Util (distance)
 
-updateCreature :: Time -> Creature -> Creature
-updateCreature dt creature@Creature{turnRate, species} =
-    creatureTurn updateCreature' ddir
+updateCreature :: Interactive (Creature s) => Time -> Creature s -> Creature s
+updateCreature dt creature@Creature{turnRate} =
+    creatureTurn (onTick dt creature) ddir
   where
-    updateCreature' = case species of
-        Ant            -> run 20
-        Fly            -> run 200
-        Flea{idleTime} -> jump idleTime 100
-        Centipede{}    -> updateCentipede
     ddir = turnRate * dt
-    run speed = creatureMovedCheckCollisions creature dist
-      where
-        dist = dt * speed
-    jump idleTime dist =
+
+class Interactive a where
+    onTick :: Time -> a -> a
+    -- TODO onEvent :: Event -> a -> a
+
+instance Interactive (Creature Ant) where
+    onTick = run 20
+
+instance Interactive (Creature Fly) where
+    onTick = run 200
+
+instance Interactive (Creature Flea) where
+    onTick dt creature@Creature{species = Flea{idleTime}} =
         if idleTime < fleaMaxIdleTime then
             creature{species = Flea{idleTime = idleTime + dt}}
         else
-            (creatureMovedCheckCollisions creature dist)
+            (creatureMovedCheckCollisions creature fleaJumpDistance)
                 {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
-    updateCentipede = runHead { species = Centipede{segments=newSegments} }
+      where
+        fleaJumpDistance = 100
+
+run :: IsSpecies s => Speed -> Time -> Creature s -> Creature s
+run speed dt creature = creatureMovedCheckCollisions creature dist
+  where
+    dist = dt * speed
+
+instance Interactive (Creature Centipede) where
+    onTick dt creature@Creature{species} =
+        runHead{species = Centipede{segments=newSegments}}
       where
         Centipede{segments} = species
 
-        runHead = run 6
+        runHead = run 6 dt creature
 
         newSegments = runChain (position runHead) segments
 
@@ -58,11 +75,12 @@ updateCreature dt creature@Creature{turnRate, species} =
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Creature -> Angle -> Creature
+creatureTurn :: Creature s -> Angle -> Creature s
 creatureTurn creature@Creature{direction} ddir =
     creature{direction = direction + ddir}
 
-creatureMovedCheckCollisions :: Creature -> Distance -> Creature
+creatureMovedCheckCollisions
+    :: IsSpecies s => Creature s -> Distance -> Creature s
 creatureMovedCheckCollisions creature@Creature{position, species} dist
     | dist <= 0 = creature
     | otherwise =
@@ -72,16 +90,17 @@ creatureMovedCheckCollisions creature@Creature{position, species} dist
           where
             maybeCollision = checkCollisions creature dist
             creatureMovedWithCollisions (collision, new_dir) =
-                case species of
-                    Flea{} -> creatureMoved creature distToCol
-                    _      -> creatureMovedCheckCollisions
-                                  (creatureMoved creature distToCol)
-                                      {direction = new_dir}
-                                  (dist - distToCol)
+                case speciesType species of
+                    SFlea -> creatureMoved creature distToCol
+                    _     ->
+                        creatureMovedCheckCollisions
+                            (creatureMoved creature distToCol)
+                                {direction = new_dir}
+                            (dist - distToCol)
               where
                 distToCol = distance position collision
 
-creatureMoved :: Creature -> Distance -> Creature
+creatureMoved :: Creature s -> Distance -> Creature s
 creatureMoved creature@Creature{position = (x, y), direction} dist =
     creature{position = pointMoved (x, y) dist direction}
 
@@ -91,7 +110,7 @@ pointMoved (x, y) dist direction = (x + dx, y + dy)
     dx = dist * cos direction
     dy = dist * sin direction
 
-checkCollisions :: Creature -> Distance -> Maybe (Point, Angle)
+checkCollisions :: Creature s -> Distance -> Maybe (Point, Angle)
 checkCollisions Creature{position = p0, direction, size} dist =
     checkDirs pU pD pL pR
   where
