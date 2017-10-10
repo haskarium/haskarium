@@ -9,6 +9,7 @@ executable haskarium-view
     main-is: Main.hs
     other-modules:  Haskarium.Const
                     Haskarium.Draw
+                    Haskarium.Generate
                     Haskarium.Motion
                     Haskarium.Types
                     Haskarium.Util
