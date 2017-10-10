@@ -3,11 +3,13 @@ module Haskarium.Generate
     ) where
 
 import           Graphics.Gloss (Point)
-import           System.Random (StdGen,  randomR)
+import           System.Random (StdGen, randomR)
 
 import           Haskarium.Types (Creature (..), Species (..))
 
-makeCreatures :: (Point, Point) -> StdGen -> [Species] -> (StdGen, [Creature])
+type Window = (Point, Point)
+
+makeCreatures :: Window -> StdGen -> [Species] -> (StdGen, [Creature])
 makeCreatures window g = foldr makeCreatures' (g, [])
   where
     ((minX, minY), (maxX, maxY)) = window
