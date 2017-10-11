@@ -1,9 +1,14 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Haskarium.Types
-    ( Creature (..)
+    ( Angle
+    , RadiansPerSecond
+    , Creature (..)
+    , Distance
     , Species (..)
     , SpeciesType (..)
+    , Speed
+    , Time
     , World
     , speciesType
     ) where
@@ -11,18 +16,21 @@ module Haskarium.Types
 import           Graphics.Gloss (Point)
 
 type Angle = Float
+type Distance = Float
 type RadiansPerSecond = Float
+type Speed = Float
+type Time = Float
 
 data Creature = Creature
     { position  :: !Point
     , direction :: !Angle
     , turnRate  :: !RadiansPerSecond
     , species   :: !Species
-    , size      :: !Float
+    , size      :: !Distance
     }
 
 data Species
-    = Ant | Flea{idleTime :: !Float} | Fly | Centipede{segments :: ![Point]}
+    = Ant | Flea{idleTime :: !Time} | Fly | Centipede{segments :: ![Point]}
 
 data SpeciesType = SAnt | SCentipede | SFlea | SFly
 

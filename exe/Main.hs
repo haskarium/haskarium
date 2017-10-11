@@ -6,7 +6,7 @@ import           Haskarium.Const (height, width)
 import           Haskarium.Draw (draw)
 import           Haskarium.Generate (makeCreatures)
 import           Haskarium.Motion (updateCreature)
-import           Haskarium.Types (SpeciesType (..), World)
+import           Haskarium.Types (SpeciesType (..), Time, World)
 
 main :: IO ()
 main = do
@@ -25,5 +25,5 @@ main = do
 onEvent :: Event -> World -> World
 onEvent _ = id
 
-onTick :: Float -> World -> World
+onTick :: Time -> World -> World
 onTick = map . updateCreature

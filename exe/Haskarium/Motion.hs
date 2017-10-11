@@ -10,10 +10,11 @@ import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
 
 import           Haskarium.Const
-import           Haskarium.Types (Creature (..), Species (..))
+import           Haskarium.Types (Angle, Creature (..), Distance, Species (..),
+                                  Time)
 import           Haskarium.Util (distance)
 
-updateCreature :: Float -> Creature -> Creature
+updateCreature :: Time -> Creature -> Creature
 updateCreature dt creature@Creature{turnRate, species} =
     creatureTurn updateCreature' ddir
   where
@@ -57,11 +58,11 @@ updateCreature dt creature@Creature{turnRate, species} =
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Creature -> Float -> Creature
+creatureTurn :: Creature -> Angle -> Creature
 creatureTurn creature@Creature{direction} ddir =
     creature{direction = direction + ddir}
 
-creatureMovedCheckCollisions :: Creature -> Float -> Creature
+creatureMovedCheckCollisions :: Creature -> Distance -> Creature
 creatureMovedCheckCollisions creature@Creature{position, species} dist
     | dist <= 0 = creature
     | otherwise =
@@ -80,17 +81,17 @@ creatureMovedCheckCollisions creature@Creature{position, species} dist
               where
                 distToCol = distance position collision
 
-creatureMoved :: Creature -> Float -> Creature
+creatureMoved :: Creature -> Distance -> Creature
 creatureMoved creature@Creature{position = (x, y), direction} dist =
     creature{position = pointMoved (x, y) dist direction}
 
-pointMoved :: Point -> Float -> Float-> Point
+pointMoved :: Point -> Distance -> Angle -> Point
 pointMoved (x, y) dist direction = (x + dx, y + dy)
   where
     dx = dist * cos direction
     dy = dist * sin direction
 
-checkCollisions :: Creature -> Float -> Maybe (Point, Float)
+checkCollisions :: Creature -> Distance -> Maybe (Point, Angle)
 checkCollisions Creature{position = p0, direction, size} dist =
     checkDirs pU pD pL pR
   where
