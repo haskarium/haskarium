@@ -27,14 +27,14 @@ makeGame window = World
     <*> makeCreatures window 0 10
 
 makeCreatures
-    :: forall species.
-    Generate species => Window -> Natural -> Natural -> State StdGen [Creature species]
-makeCreatures window minN maxN =
-    pNCreatures >>= \nCreatures ->
+    :: forall species
+    .  Generate species
+    => Window -> Natural -> Natural -> State StdGen [Creature species]
+makeCreatures window minN maxN = do
+    nCreatures <- randomRS (fromIntegral minN, fromIntegral maxN)
     replicateM nCreatures makeCreature
   where
     ((minX, minY), (maxX, maxY)) = window
-    pNCreatures = randomRS (fromIntegral minN, fromIntegral maxN)
     makeCreature = Creature
         <$> pPos
         <*> pDir
