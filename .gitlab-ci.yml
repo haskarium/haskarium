@@ -1,0 +1,18 @@
+image: fpco/stack-build:lts-9.9
+
+variables:
+  stack: "stack --system-ghc --stack-root=$CI_PROJECT_DIR/.stack-root/"
+
+cache:
+  paths:
+    - .stack-root/
+
+test:
+  script:
+    - $stack build --test --only-dependencies
+    - $stack test --pedantic
+    - $stack build --haddock --no-haddock-deps
+
+hlint:
+  script:
+    - $stack exec --package=hlint -- hlint .
