@@ -49,9 +49,15 @@
 > -- instance Semigroup Int -- no way
 > newtype Sum     a = Sum     a
 > newtype Product a = Product a
-> instance Num a => Semigroup (Sum a) where Sum x <> Sum     y = Sum     (x + y)
-> instance Num a => Semigroup (Product a) where
->                                       Product x <> Product y = Product (x * y)
+> instance Num a =>
+>           Semigroup (Sum     a) where Sum     x <> Sum     y = Sum     (x + y)
+> instance Num a =>
+>           Semigroup (Product a) where Product x <> Product y = Product (x * y)
+
+(В этом и следующих примере код отформатирован не так,
+как это принято в реальном коде, а так,
+чтобы было удобно сравнивать строки визуально,
+находя общие и различающиеся элементы.)
 
 Аналогичная ситуация с минимумом и максимумом
 
