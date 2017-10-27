@@ -6,9 +6,10 @@ module Haskarium.Draw
     ( draw
     ) where
 
+import           Data.Monoid ((<>))
 import           Graphics.Gloss (Picture, blank, blue, circle, circleSolid,
-                                 color, green, orange, pictures, polygon, red,
-                                 rotate, translate)
+                                 color, green, orange, polygon, red, rotate,
+                                 translate)
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
 import           Haskarium.Const (centipedeSegmentRadius)
@@ -21,7 +22,7 @@ class Drawable a where
 
 instance Drawable (Creature Centipede) where
     draw Creature{position, species = Centipede segments} =
-        pictures $ map draw' (position : segments)
+        mconcat $ map draw' (position : segments)
       where
         draw' (x, y) =
           translate x y .
@@ -47,24 +48,12 @@ drawCreature Creature{position = (x, y), direction, species} =
 figure :: SpeciesType -> Picture
 figure = \case
     SAnt ->
-        color red $
-        pictures
-            [ triangleBody
-            , translate (-5) 0 $ circle 5
-            ]
+        color red $ triangleBody <> translate (-5) 0 (circle 5)
     SFlea ->
-        color blue $
-        pictures
-            [ triangleBody
-            , translate (-5) 0 $ circle 5
-            ]
+        color blue $ triangleBody <> translate (-5) 0 (circle 5)
     SFly ->
         color green $
-        pictures
-            [ triangleBody
-            , translate 5   5  $ circle 5
-            , translate 5 (-5) $ circle 5
-            ]
+        triangleBody <> translate 5 5 (circle 5) <> translate 5 (-5) (circle 5)
     _ ->
         blank
   where
@@ -75,8 +64,8 @@ figure = \case
         ]
 
 instance Drawable World where
-    draw World{ants, centipedes, fleas, flies} = pictures $
-        map draw ants ++
-        map draw centipedes ++
-        map draw fleas ++
+    draw World{ants, centipedes, fleas, flies} = mconcat $
+        map draw ants <>
+        map draw centipedes <>
+        map draw fleas <>
         map draw flies

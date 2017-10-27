@@ -4,17 +4,20 @@
 
 module Haskarium.Motion
     ( updateCreature
+    , Interactive (..)
     ) where
 
 import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
+import           Graphics.Gloss.Interface.Pure.Game (Event)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
                                   Distance, Flea (..), Fly, IsSpecies,
-                                  SpeciesType (SFlea), Speed, Time, speciesType)
+                                  SpeciesType (SFlea), Speed, Time, World (..),
+                                  speciesType)
 import           Haskarium.Util (distance)
 
 updateCreature :: Interactive (Creature s) => Time -> Creature s -> Creature s
@@ -25,7 +28,18 @@ updateCreature dt creature@Creature{turnRate} =
 
 class Interactive a where
     onTick :: Time -> a -> a
-    -- TODO onEvent :: Event -> a -> a
+    onTick _ = id
+
+    onEvent :: Event -> a -> a
+    onEvent _ = id
+
+instance Interactive World where
+    onTick dt World{ants, centipedes, fleas, flies} = World
+        { ants        = map (updateCreature dt) ants
+        , centipedes  = map (updateCreature dt) centipedes
+        , fleas       = map (updateCreature dt) fleas
+        , flies       = map (updateCreature dt) flies
+        }
 
 instance Interactive (Creature Ant) where
     onTick = run 20
