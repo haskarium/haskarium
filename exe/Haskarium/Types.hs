@@ -7,11 +7,9 @@ module Haskarium.Types
     , Distance
     , Flea (..)
     , Fly (..)
-    , SpeciesType (..)
     , Speed
     , Time
     , World (..)
-    , IsSpecies (..)
     ) where
 
 import           Graphics.Gloss (Point)
@@ -30,30 +28,13 @@ data Creature species = Creature
     , size      :: !Distance
     }
 
-data SpeciesType = SAnt | SCentipede | SFlea | SFly
-
-class IsSpecies species where
-    speciesType :: species -> SpeciesType
-
 data Ant = Ant
-
-instance IsSpecies Ant where
-    speciesType _ = SAnt
 
 newtype Centipede = Centipede{segments :: [Point]}
 
-instance IsSpecies Centipede where
-    speciesType _ = SCentipede
-
 newtype Flea = Flea{idleTime :: Time}
 
-instance IsSpecies Flea where
-    speciesType _ = SFlea
-
 data Fly = Fly
-
-instance IsSpecies Fly where
-    speciesType _ = SFly
 
 data World = World
     { ants :: [Creature Ant]

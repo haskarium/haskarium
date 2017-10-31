@@ -1,20 +1,23 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 module Haskarium.Generate
     ( makeCreatures
-    , Generate (..)
     ) where
 
 import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
 import           System.Random (StdGen, randomR)
 
-import           Haskarium.Types (Ant (..), Centipede (..), Creature (..),
-                                  Flea (..), Fly (..), IsSpecies,
-                                  SpeciesType (SCentipede), speciesType)
+import           Haskarium.Types (Angle, Ant (..), Centipede (..),
+                                  Creature (..), Flea (..), Fly (..))
 
 type Window = (Point, Point)
 
 makeCreatures
-    :: (Generate species, IsSpecies species)
+    :: forall species.
+    Generate species
     => Window -> StdGen -> Natural -> (StdGen, [Creature species])
 makeCreatures window g n = foldr makeCreatures' (g, []) [1..n]
   where
@@ -30,20 +33,20 @@ makeCreatures window g n = foldr makeCreatures' (g, []) [1..n]
         (x, g1) = randomR (minX + fakeSize / 2, maxX - fakeSize / 2) g0
         (y, g2) = randomR (minY + fakeSize / 2, maxY - fakeSize / 2) g1
         (dir, g3) = randomR (0, 2 * pi) g2
-        (tr, g4) = case speciesType s of
-            SCentipede ->
-                randomR (-pi / 34, -pi / 30) g3
-            _ ->
-                randomR (pi / 4, pi / 2) g3
+        (tr, g4) = randomR (turnRateRange @species) g3
         (s, g5) = generate g4
 
 class Generate a where
     generate :: StdGen -> (a, StdGen)
 
+    turnRateRange :: (Angle, Angle)
+    turnRateRange = (pi / 4, pi / 2)
+
 instance Generate Centipede where
     generate g =
         let (numSegments, g') = randomR (5, 15) g
         in  (Centipede{segments = replicate numSegments (0, 0)}, g')
+    turnRateRange = (-pi / 34, -pi / 30)
 
 instance Generate Flea where
     generate g =

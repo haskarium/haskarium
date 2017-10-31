@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Haskarium.Draw
@@ -7,15 +6,13 @@ module Haskarium.Draw
     ) where
 
 import           Data.Monoid ((<>))
-import           Graphics.Gloss (Picture, blank, blue, circle, circleSolid,
-                                 color, green, orange, polygon, red, rotate,
-                                 translate)
+import           Graphics.Gloss (Picture, blue, circle, circleSolid, color,
+                                 green, orange, polygon, red, rotate, translate)
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
 import           Haskarium.Const (centipedeSegmentRadius)
 import           Haskarium.Types (Ant, Centipede (..), Creature (..), Flea, Fly,
-                                  IsSpecies, SpeciesType (..), World (..),
-                                  speciesType)
+                                  World (..))
 
 class Drawable a where
     draw :: a -> Picture
@@ -30,38 +27,29 @@ instance Drawable (Creature Centipede) where
           circleSolid centipedeSegmentRadius
 
 instance Drawable (Creature Ant) where
-    draw = drawCreature
+    draw =
+        drawCreature $ color red $ triangleBody <> translate (-5) 0 (circle 5)
 
 instance Drawable (Creature Flea) where
-    draw = drawCreature
+    draw =
+        drawCreature $ color blue $ triangleBody <> translate (-5) 0 (circle 5)
 
 instance Drawable (Creature Fly) where
-    draw = drawCreature
-
-drawCreature :: IsSpecies s => Creature s -> Picture
-drawCreature Creature{position = (x, y), direction, species} =
-    translate x y .
-    rotate (- radToDeg direction) .
-    figure $
-    speciesType species
-
-figure :: SpeciesType -> Picture
-figure = \case
-    SAnt ->
-        color red $ triangleBody <> translate (-5) 0 (circle 5)
-    SFlea ->
-        color blue $ triangleBody <> translate (-5) 0 (circle 5)
-    SFly ->
+    draw =
+        drawCreature $
         color green $
         triangleBody <> translate 5 5 (circle 5) <> translate 5 (-5) (circle 5)
-    _ ->
-        blank
-  where
-    triangleBody = polygon
-        [ ( 5,  0)
-        , (-5, -5)
-        , (-5,  5)
-        ]
+
+drawCreature :: Picture -> Creature s -> Picture
+drawCreature body Creature{position = (x, y), direction} =
+    translate x y $ rotate (- radToDeg direction) body
+
+triangleBody :: Picture
+triangleBody = polygon
+    [ ( 5,  0)
+    , (-5, -5)
+    , (-5,  5)
+    ]
 
 instance Drawable World where
     draw World{ants, centipedes, fleas, flies} = mconcat $

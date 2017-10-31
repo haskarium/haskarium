@@ -3,8 +3,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Haskarium.Motion
-    ( updateCreature
-    , Interactive (..)
+    ( Interactive (..)
     ) where
 
 import           Graphics.Gloss (Point)
@@ -15,9 +14,8 @@ import           Graphics.Gloss.Interface.Pure.Game (Event)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
-                                  Distance, Flea (..), Fly, IsSpecies,
-                                  SpeciesType (SFlea), Speed, Time, World (..),
-                                  speciesType)
+                                  Distance, Flea (..), Fly, Speed, Time,
+                                  World (..))
 import           Haskarium.Util (distance)
 
 updateCreature :: Interactive (Creature s) => Time -> Creature s -> Creature s
@@ -57,7 +55,7 @@ instance Interactive (Creature Flea) where
       where
         fleaJumpDistance = 100
 
-run :: IsSpecies s => Speed -> Time -> Creature s -> Creature s
+run :: Speed -> Time -> Creature s -> Creature s
 run speed dt creature = creatureMovedCheckCollisions creature dist
   where
     dist = dt * speed
@@ -93,30 +91,10 @@ creatureTurn :: Creature s -> Angle -> Creature s
 creatureTurn creature@Creature{direction} ddir =
     creature{direction = direction + ddir}
 
-creatureMovedCheckCollisions
-    :: IsSpecies s => Creature s -> Distance -> Creature s
-creatureMovedCheckCollisions creature@Creature{position, species} dist
+creatureMovedCheckCollisions :: Creature s -> Distance -> Creature s
+creatureMovedCheckCollisions creature dist
     | dist <= 0 = creature
-    | otherwise =
-        case maybeCollision of
-            Nothing         -> creatureMoved creature dist
-            Just collision' -> creatureMovedWithCollisions collision'
-          where
-            maybeCollision = checkCollisions creature dist
-            creatureMovedWithCollisions (collision, new_dir) =
-                case speciesType species of
-                    SFlea -> creatureMoved creature distToCol
-                    _     ->
-                        creatureMovedCheckCollisions
-                            (creatureMoved creature distToCol)
-                                {direction = new_dir}
-                            (dist - distToCol)
-              where
-                distToCol = distance position collision
-
-creatureMoved :: Creature s -> Distance -> Creature s
-creatureMoved creature@Creature{position = (x, y), direction} dist =
-    creature{position = pointMoved (x, y) dist direction}
+    | otherwise = creature{position = advance creature dist}
 
 pointMoved :: Point -> Distance -> Angle -> Point
 pointMoved (x, y) dist direction = (x + dx, y + dy)
@@ -124,15 +102,15 @@ pointMoved (x, y) dist direction = (x + dx, y + dy)
     dx = dist * cos direction
     dy = dist * sin direction
 
-checkCollisions :: Creature s -> Distance -> Maybe (Point, Angle)
-checkCollisions Creature{position = p0, direction, size} dist =
+advance :: Creature s -> Distance -> Point
+advance Creature{position = p0, direction, size} dist =
     checkDirs pU pD pL pR
   where
-    checkDirs (Just pu) _ _ _ | isMovedUp    = Just (pu, -direction)
-    checkDirs _ (Just pd) _ _ | isMovedDown  = Just (pd, -direction)
-    checkDirs _ _ (Just pl) _ | isMovedLeft  = Just (pl, pi - direction)
-    checkDirs _ _ _ (Just pr) | isMovedRight = Just (pr, pi - direction)
-    checkDirs _ _ _ _                        = Nothing
+    checkDirs (Just pu) _ _ _ | isMovedUp    = pu
+    checkDirs _ (Just pd) _ _ | isMovedDown  = pd
+    checkDirs _ _ (Just pl) _ | isMovedLeft  = pl
+    checkDirs _ _ _ (Just pr) | isMovedRight = pr
+    checkDirs _ _ _ _                        = p1
     normDir = normalizeAngle direction
     isMovedUp = normDir < pi
     isMovedDown = normDir > pi
