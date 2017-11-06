@@ -35,7 +35,7 @@ class Interactive a where
     onEvent _ = id
 
 instance Interactive World where
-    onTick dt w@World{ants, centipedes, fleas, flies, randomGen = g0} =
+    onTick dt World{ants, centipedes, fleas, flies, randomGen = g0} =
       World { ants        = ants'
             , centipedes  = centipedes'
             , fleas       = fleas'
