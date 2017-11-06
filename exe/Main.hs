@@ -15,8 +15,8 @@ main = do
     let (g1, ants)        = makeCreatures window g0 10
     let (g2, centipedes)  = makeCreatures window g1 10
     let (g3, fleas)       = makeCreatures window g2 10
-    let (_g4, flies)      = makeCreatures window g3 10
-    let startWorld = World{ants, centipedes, fleas, flies}
+    let (g4, flies)       = makeCreatures window g3 10
+    let startWorld = World{ants, centipedes, fleas, flies, randomGen = g4}
     play display white refreshRate startWorld draw onEvent onTick
   where
     window =

@@ -11,6 +11,7 @@ import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
 import           Graphics.Gloss.Interface.Pure.Game (Event)
+import           System.Random (StdGen, randomR)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
@@ -18,11 +19,13 @@ import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
                                   World (..))
 import           Haskarium.Util (distance)
 
-updateCreature :: Interactive (Creature s) => Time -> Creature s -> Creature s
-updateCreature dt creature@Creature{turnRate} =
-    creatureTurn (onTick dt creature) ddir
-  where
-    ddir = turnRate * dt
+updateCreature :: Interactive (Creature s) => Time
+                                           -> Creature s
+                                           -> (StdGen, [Creature s])
+                                           -> (StdGen, [Creature s])
+updateCreature dt creature (g, creatures) = (g', c : creatures)
+    where
+      (g', c) = creatureTurn (onTick dt creature) dt g
 
 class Interactive a where
     onTick :: Time -> a -> a
@@ -32,12 +35,19 @@ class Interactive a where
     onEvent _ = id
 
 instance Interactive World where
-    onTick dt World{ants, centipedes, fleas, flies} = World
-        { ants        = map (updateCreature dt) ants
-        , centipedes  = map (updateCreature dt) centipedes
-        , fleas       = map (updateCreature dt) fleas
-        , flies       = map (updateCreature dt) flies
-        }
+    onTick dt w@World{ants, centipedes, fleas, flies, randomGen = g0} =
+      World { ants        = ants'
+            , centipedes  = centipedes'
+            , fleas       = fleas'
+            , flies       = flies'
+            , randomGen   = g4
+            }
+      where
+        (g1, ants')       = foldr (updateCreature dt) (g0,[]) ants
+        (g2, centipedes') = foldr (updateCreature dt) (g1,[]) centipedes
+        (g3, fleas')      = foldr (updateCreature dt) (g2,[]) fleas
+        (g4, flies')      = foldr (updateCreature dt) (g3,[]) flies
+
 
 instance Interactive (Creature Ant) where
     onTick = run 20
@@ -66,7 +76,7 @@ instance Interactive (Creature Centipede) where
       where
         Centipede{segments} = species
 
-        runHead = run 6 dt creature
+        runHead = run 10 dt creature
 
         newSegments = runChain (position runHead) segments
 
@@ -87,9 +97,31 @@ instance Interactive (Creature Centipede) where
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Creature s -> Angle -> Creature s
-creatureTurn creature@Creature{direction} ddir =
-    creature{direction = direction + ddir}
+creatureTurn :: Creature s -> Time -> StdGen -> (StdGen, Creature s)
+creatureTurn creature dt g =
+    (g', creature{targetDir = newTdir, currentDir = newCdir})
+      where
+        Creature { targetDir = tdir
+                 , currentDir = cdir
+                 , turnRate = tr
+                 } = creature
+        (newTdir, g') =
+            if   (cdir <= tdir && cdir' >= tdir)
+              || (cdir >= tdir && cdir' <= tdir)
+            then
+              randomR (0, 2 * pi) g
+            else
+              (tdir, g)
+        newCdir
+          | cdir' < 0       = cdir' + 2 * pi
+          | cdir' > 2 * pi  = cdir' - 2 * pi
+          | otherwise       = cdir'
+        cdir' = cdir + trSign * tr * dt
+        trSign =
+          if (delta > -pi && delta < 0) || delta > pi
+          then -1
+          else 1
+        delta = tdir - cdir
 
 creatureMovedCheckCollisions :: Creature s -> Distance -> Creature s
 creatureMovedCheckCollisions creature dist
@@ -103,7 +135,7 @@ pointMoved (x, y) dist direction = (x + dx, y + dy)
     dy = dist * sin direction
 
 advance :: Creature s -> Distance -> Point
-advance Creature{position = p0, direction, size} dist =
+advance Creature{position = p0, currentDir = direction, size} dist =
     checkDirs pU pD pL pR
   where
     checkDirs (Just pu) _ _ _ | isMovedUp    = pu

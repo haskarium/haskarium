@@ -13,6 +13,7 @@ module Haskarium.Types
     ) where
 
 import           Graphics.Gloss (Point)
+import           System.Random (StdGen)
 
 type Angle = Float
 type Distance = Float
@@ -21,11 +22,12 @@ type Speed = Float
 type Time = Float
 
 data Creature species = Creature
-    { position  :: !Point
-    , direction :: !Angle
-    , turnRate  :: !RadiansPerSecond
-    , species   :: !species
-    , size      :: !Distance
+    { position   :: !Point
+    , targetDir  :: !Angle
+    , currentDir :: !Angle
+    , turnRate   :: !RadiansPerSecond
+    , species    :: !species
+    , size       :: !Distance
     }
 
 data Ant = Ant
@@ -41,4 +43,5 @@ data World = World
     , centipedes :: [Creature Centipede]
     , fleas :: [Creature Flea]
     , flies :: [Creature Fly]
+    , randomGen :: !StdGen
     }

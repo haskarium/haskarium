@@ -26,7 +26,8 @@ makeCreatures window g n = foldr makeCreatures' (g, []) [1..n]
       where
         fakeSize = 10  -- TODO: add real creature sizes
         c = Creature{ position = (x, y)
-                    , direction = dir
+                    , targetDir = dir
+                    , currentDir = dir
                     , turnRate = tr
                     , species = s
                     , size = fakeSize}
@@ -46,7 +47,7 @@ instance Generate Centipede where
     generate g =
         let (numSegments, g') = randomR (5, 15) g
         in  (Centipede{segments = replicate numSegments (0, 0)}, g')
-    turnRateRange = (-pi / 34, -pi / 30)
+    turnRateRange = (pi / 25, pi / 20)
 
 instance Generate Flea where
     generate g =
