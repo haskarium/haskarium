@@ -19,13 +19,12 @@ import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
                                   World (..))
 import           Haskarium.Util (distance)
 
-updateCreature :: Interactive (Creature s) => Time
-                                           -> Creature s
-                                           -> (StdGen, [Creature s])
-                                           -> (StdGen, [Creature s])
+updateCreature
+    :: Interactive (Creature s)
+    => Time -> Creature s -> (StdGen, [Creature s]) -> (StdGen, [Creature s])
 updateCreature dt creature (g, creatures) = (g', c : creatures)
-    where
-      (g', c) = creatureTurn (onTick dt creature) dt g
+  where
+    (g', c) = creatureTurn (onTick dt creature) dt g
 
 class Interactive a where
     onTick :: Time -> a -> a
@@ -35,19 +34,18 @@ class Interactive a where
     onEvent _ = id
 
 instance Interactive World where
-    onTick dt World{ants, centipedes, fleas, flies, randomGen = g0} =
-      World { ants        = ants'
-            , centipedes  = centipedes'
-            , fleas       = fleas'
-            , flies       = flies'
-            , randomGen   = g4
-            }
+    onTick dt World{ants, centipedes, fleas, flies, randomGen = g0} = World
+        { ants        = ants'
+        , centipedes  = centipedes'
+        , fleas       = fleas'
+        , flies       = flies'
+        , randomGen   = g4
+        }
       where
-        (g1, ants')       = foldr (updateCreature dt) (g0,[]) ants
-        (g2, centipedes') = foldr (updateCreature dt) (g1,[]) centipedes
-        (g3, fleas')      = foldr (updateCreature dt) (g2,[]) fleas
-        (g4, flies')      = foldr (updateCreature dt) (g3,[]) flies
-
+        (g1, ants')       = foldr (updateCreature dt) (g0, []) ants
+        (g2, centipedes') = foldr (updateCreature dt) (g1, []) centipedes
+        (g3, fleas')      = foldr (updateCreature dt) (g2, []) fleas
+        (g4, flies')      = foldr (updateCreature dt) (g3, []) flies
 
 instance Interactive (Creature Ant) where
     onTick = run 20
@@ -81,8 +79,7 @@ instance Interactive (Creature Centipede) where
         newSegments = runChain (position runHead) segments
 
         runChain _ [] = []
-        runChain p@(px, py) (c@(cx, cy) : next) =
-            let
+        runChain p@(px, py) (c@(cx, cy) : next) = let
             dist = distance p c
             c' =
                 if dist < maxNeck then
@@ -99,29 +96,26 @@ instance Interactive (Creature Centipede) where
 
 creatureTurn :: Creature s -> Time -> StdGen -> (StdGen, Creature s)
 creatureTurn creature dt g =
-    (g', creature{targetDir = newTdir, currentDir = newCdir})
-      where
-        Creature { targetDir = tdir
-                 , currentDir = cdir
-                 , turnRate = tr
-                 } = creature
-        (newTdir, g') =
-            if   (cdir <= tdir && cdir' >= tdir)
-              || (cdir >= tdir && cdir' <= tdir)
-            then
-              randomR (0, 2 * pi) g
-            else
-              (tdir, g)
-        newCdir
-          | cdir' < 0       = cdir' + 2 * pi
-          | cdir' > 2 * pi  = cdir' - 2 * pi
-          | otherwise       = cdir'
-        cdir' = cdir + trSign * tr * dt
-        trSign =
-          if (delta > -pi && delta < 0) || delta > pi
-          then -1
-          else 1
-        delta = tdir - cdir
+    (g', creature{targetDir = targetDir', currentDir = newCurrentDir})
+  where
+    Creature{targetDir, currentDir, turnRate} = creature
+    (targetDir', g') =
+        if   (currentDir  <= targetDir && targetDir <= currentDir')
+          || (currentDir' <= targetDir && targetDir <= currentDir ) then
+            randomR (0, 2 * pi) g
+        else
+            (targetDir, g)
+    newCurrentDir
+        | currentDir' < 0       = currentDir' + 2 * pi
+        | currentDir' > 2 * pi  = currentDir' - 2 * pi
+        | otherwise             = currentDir'
+    currentDir' = currentDir + trSign * turnRate * dt
+    trSign =
+        if (-pi < delta && delta < 0) || delta > pi then
+            -1
+        else
+            1
+    delta = targetDir - currentDir
 
 creatureMovedCheckCollisions :: Creature s -> Distance -> Creature s
 creatureMovedCheckCollisions creature dist
@@ -135,7 +129,7 @@ pointMoved (x, y) dist direction = (x + dx, y + dy)
     dy = dist * sin direction
 
 advance :: Creature s -> Distance -> Point
-advance Creature{position = p0, currentDir = direction, size} dist =
+advance Creature{position = p0, currentDir, size} dist =
     checkDirs pU pD pL pR
   where
     checkDirs (Just pu) _ _ _ | isMovedUp    = pu
@@ -143,12 +137,12 @@ advance Creature{position = p0, currentDir = direction, size} dist =
     checkDirs _ _ (Just pl) _ | isMovedLeft  = pl
     checkDirs _ _ _ (Just pr) | isMovedRight = pr
     checkDirs _ _ _ _                        = p1
-    normDir = normalizeAngle direction
+    normDir = normalizeAngle currentDir
     isMovedUp = normDir < pi
     isMovedDown = normDir > pi
     isMovedLeft = normDir > pi/2 && normDir < 3 * pi / 2
     isMovedRight = normDir < pi/2 || normDir > 3 * pi / 2
-    p1 = pointMoved p0 dist direction
+    p1 = pointMoved p0 dist currentDir
     pU = intersectSegHorzLine p0 p1 ((fromIntegral height / 2) - size / 2)
     pD = intersectSegHorzLine p0 p1 ((- fromIntegral height / 2) + size / 2)
     pL = intersectSegVertLine p0 p1 ((- fromIntegral width / 2) + size / 2)

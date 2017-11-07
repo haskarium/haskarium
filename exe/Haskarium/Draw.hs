@@ -41,8 +41,8 @@ instance Drawable (Creature Fly) where
         triangleBody <> translate 5 5 (circle 5) <> translate 5 (-5) (circle 5)
 
 drawCreature :: Picture -> Creature s -> Picture
-drawCreature body Creature{position = (x, y), currentDir = direction} =
-    translate x y $ rotate (- radToDeg direction) body
+drawCreature body Creature{position = (x, y), currentDir} =
+    translate x y $ rotate (- radToDeg currentDir) body
 
 triangleBody :: Picture
 triangleBody = polygon

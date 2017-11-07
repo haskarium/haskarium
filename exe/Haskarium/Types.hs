@@ -22,12 +22,12 @@ type Speed = Float
 type Time = Float
 
 data Creature species = Creature
-    { position   :: !Point
-    , targetDir  :: !Angle
+    { position :: !Point
+    , targetDir :: !Angle
     , currentDir :: !Angle
-    , turnRate   :: !RadiansPerSecond
-    , species    :: !species
-    , size       :: !Distance
+    , turnRate :: !RadiansPerSecond
+    , species :: !species
+    , size :: !Distance
     }
 
 data Ant = Ant
@@ -39,9 +39,9 @@ newtype Flea = Flea{idleTime :: Time}
 data Fly = Fly
 
 data World = World
-    { ants :: [Creature Ant]
-    , centipedes :: [Creature Centipede]
-    , fleas :: [Creature Flea]
-    , flies :: [Creature Fly]
+    { ants :: ![Creature Ant]
+    , centipedes :: ![Creature Centipede]
+    , fleas :: ![Creature Flea]
+    , flies :: ![Creature Fly]
     , randomGen :: !StdGen
     }
