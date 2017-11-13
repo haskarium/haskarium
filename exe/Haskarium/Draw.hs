@@ -19,12 +19,12 @@ class Drawable a where
 
 instance Drawable (Creature Centipede) where
     draw Creature{position, species = Centipede segments} =
-        mconcat $ map draw' (position : segments)
+        foldMap draw' (position : segments)
       where
         draw' (x, y) =
-          translate x y .
-          color orange $
-          circleSolid centipedeSegmentRadius
+            translate x y .
+            color orange $
+            circleSolid centipedeSegmentRadius
 
 instance Drawable (Creature Ant) where
     draw =
@@ -52,8 +52,8 @@ triangleBody = polygon
     ]
 
 instance Drawable World where
-    draw World{ants, centipedes, fleas, flies} = mconcat $
-        map draw ants <>
-        map draw centipedes <>
-        map draw fleas <>
-        map draw flies
+    draw World{ants, centipedes, fleas, flies} =
+        foldMap draw ants <>
+        foldMap draw centipedes <>
+        foldMap draw fleas <>
+        foldMap draw flies
