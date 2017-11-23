@@ -6,6 +6,7 @@ module Functor where
 
 import           Prelude hiding (Functor, fmap)
 
+import           Data.Functor.Identity
 import           Data.Kind (Type)
 import           Data.Proxy
 
@@ -53,3 +54,15 @@ instance Functor [] where
 divL x y = case y of 0 -> []; _ -> [x `div` y]
 
 example3 = fmap (show . succ) $ divL 42 1
+
+-- newtype Identity a = Identity a
+-- Identity :: Type -> Type
+instance Functor Identity where
+    fmap :: (a -> b) -> Identity a -> Identity b
+    fmap f (Identity a) = Identity (f a)
+
+-- instance Functor IO where
+--     fmap :: (a -> b) -> IO a -> IO b
+--     fmap f ioa = do
+--         a <- ioa
+--         IO (f a)
