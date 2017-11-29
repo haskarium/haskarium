@@ -4,11 +4,15 @@
 
 module Functor where
 
-import           Prelude hiding (Functor, fmap)
+import           Prelude hiding (Functor, flip, fmap)
 
 import           Data.Functor.Identity
 import           Data.Kind (Type)
+import           Data.Map (Map)
+import qualified Data.Map as Map
 import           Data.Proxy
+import           Data.Set (Set)
+import qualified Data.Set as Set
 
 -- Maybe :: Type -> Type
 
@@ -66,3 +70,24 @@ instance Functor Identity where
 --     fmap f ioa = do
 --         a <- ioa
 --         IO (f a)
+
+-- Set a :: Type
+-- Set :: Type -> Type
+--
+-- NOT instance Functor Set where
+--     fmap :: (a -> b) -> Set a -> Set b
+--     fmap = Set.map -- cannot restrict b to Ord
+
+instance Functor (Map k) where
+    fmap :: (a -> b) -> Map k a -> Map k b
+    fmap = Map.map
+
+($>) :: Functor f => f a -> b -> f b
+fa $> b = fmap (const b) fa
+
+flip :: (a -> b -> c) -> (b -> a -> c)
+flip f = \b a -> f a b
+{-# ANN flip "HLint: ignore" #-}
+
+(<$) :: Functor f => b -> f a -> f b
+(<$) = flip ($>)

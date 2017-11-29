@@ -4,10 +4,12 @@
 
 module Applicative where
 
-import           Prelude hiding (Applicative)
+import           Prelude hiding (Applicative, pure, (<$>), (<*>))
 
 import           Data.Functor.Identity
 import           Data.Kind (Type)
+import           Data.Map (Map)
+import qualified Data.Map as Map
 import           Data.Proxy
 
 -- fmap  :: (a -> b) -> f a -> f b
@@ -46,6 +48,10 @@ instance Applicative Identity where
     Identity f <*> Identity a = Identity (f a)
 
 -- instance Applicative IO where
+--     pure :: a -> IO a
+--     pure = ...
+--     (<*>) :: IO (a -> b) -> IO a -> IO b
+--     (<*>) = ...
 
 instance Applicative [] where
     pure :: a -> [a]
@@ -58,3 +64,31 @@ instance Applicative [] where
 
 (<$>) :: Functor f => (a -> b) -> f a -> f b
 (<$>) = fmap
+
+-- NOT instance Applicative (Map k) where
+--     pure :: a -> Map k a
+
+-- (*>) :: Applicative f => f a -> f b -> f b
+-- actionA *> actionB = pure (\_ b -> b) <*> actionA <*> actionB
+--
+-- (<*) :: Applicative f => f a -> f b -> f a
+-- actionA <* actionB = pure const <*> actionA <*> actionB
+
+-- const a = \_ -> a
+-- const a _ = a
+
+liftA0 :: Applicative f => a -> f a
+liftA0 = pure
+
+liftA1 :: Functor f => (a -> b) -> f a -> f b
+liftA1 = fmap
+
+liftA2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+liftA2 g fa fb = g <$> fa <*> fb
+         -- pure g <*> fa <*> fb
+
+(*>) :: Applicative f => f a -> f b -> f b
+(*>) = liftA2 (\_ b -> b)
+
+(<*) :: Applicative f => f a -> f b -> f a
+(<*) = liftA2 const
