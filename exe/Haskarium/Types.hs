@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveFunctor #-}
+
 module Haskarium.Types
     ( Angle
     , RadiansPerSecond
@@ -10,6 +12,7 @@ module Haskarium.Types
     , Speed
     , Time
     , World (..)
+    , Rnd (..)
     ) where
 
 import           Graphics.Gloss (Point)
@@ -45,3 +48,19 @@ data World = World
     , flies :: ![Creature Fly]
     , randomGen :: !StdGen
     }
+
+newtype Rnd a = Rnd
+    { runRnd :: StdGen -> (StdGen, a)
+    }
+    deriving (Functor)
+
+instance Applicative Rnd where
+    pure x = Rnd $ \g ->
+        (g, x)
+
+    u <*> v = Rnd $ \g ->
+        let
+            (gU, f)  = runRnd u g
+            (gV, x) = runRnd v gU
+        in
+            (gV, f x)
