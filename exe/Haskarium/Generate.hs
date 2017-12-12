@@ -18,10 +18,11 @@ type Window = (Point, Point)
 makeCreatures
     :: forall species.
     Generate species
-    => Window -> StdGen -> Natural -> (StdGen, [Creature species])
-makeCreatures window g n = foldr makeCreatures' (g, []) [1..n]
+    => Window -> StdGen -> Natural -> Natural -> (StdGen, [Creature species])
+makeCreatures window g minN maxN = foldr makeCreatures' (g', []) [1::Int .. nCreatures]
   where
     ((minX, minY), (maxX, maxY)) = window
+    (nCreatures, g') = randomR (fromIntegral minN, fromIntegral maxN) g
     makeCreatures' _ (g0, creatures) = (g5, c : creatures)
       where
         fakeSize = 10  -- TODO: add real creature sizes

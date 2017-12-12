@@ -12,10 +12,10 @@ import           Haskarium.Types (World (..))
 main :: IO ()
 main = do
     g0 <- newStdGen
-    let (g1, ants)        = makeCreatures window g0 10
-    let (g2, centipedes)  = makeCreatures window g1 10
-    let (g3, fleas)       = makeCreatures window g2 10
-    let (g4, flies)       = makeCreatures window g3 10
+    let (g1, ants)        = makeCreatures window g0 0 10
+    let (g2, centipedes)  = makeCreatures window g1 0 10
+    let (g3, fleas)       = makeCreatures window g2 0 10
+    let (g4, flies)       = makeCreatures window g3 0 10
     let startWorld = World{ants, centipedes, fleas, flies, randomGen = g4}
     play display white refreshRate startWorld draw onEvent onTick
   where
