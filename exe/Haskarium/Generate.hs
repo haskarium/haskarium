@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Haskarium.Generate
-    ( makeCreatures
+    ( makeWorld
     ) where
 
 import           Graphics.Gloss (Point)
@@ -11,19 +11,42 @@ import           Numeric.Natural (Natural)
 import           System.Random (StdGen, randomR)
 
 import           Haskarium.Types (Angle, Ant (..), Centipede (..),
-                                  Creature (..), Flea (..), Fly (..))
+                                  Creature (..), Flea (..), Fly (..),
+                                  World (..), Rnd (..))
 
 type Window = (Point, Point)
+
+makeWorld :: Window -> StdGen -> World
+makeWorld window seed = world' { randomGen = next }
+  where
+    (next, world') = runRnd (worldGen window seed) seed
+
+-- TODO: Get creature ranges from worldgen options
+worldGen :: Window -> StdGen -> Rnd World
+worldGen window dummyGen = World
+    <$> makeCreaturesRnd window 0 10
+    <*> makeCreaturesRnd window 0 10
+    <*> makeCreaturesRnd window 0 10
+    <*> makeCreaturesRnd window 0 10
+    <*> pure dummyGen -- FIXME: extract to simulation state
+
+makeCreaturesRnd
+    :: forall species. Generate species
+    => Window -> Natural -> Natural -> Rnd [Creature species]
+makeCreaturesRnd window minN maxN = Rnd $ \g ->
+    makeCreatures window g minN maxN
 
 makeCreatures
     :: forall species.
     Generate species
-    => Window -> StdGen -> Natural -> (StdGen, [Creature species])
-makeCreatures window g n = foldr makeCreatures' (g, []) [1..n]
+    => Window -> StdGen -> Natural -> Natural -> (StdGen, [Creature species])
+makeCreatures window g minN maxN = foldr makeCreatures' (g', []) [1::Int .. nCreatures]
   where
     ((minX, minY), (maxX, maxY)) = window
+    (nCreatures, g') = randomR (fromIntegral minN, fromIntegral maxN) g
     makeCreatures' _ (g0, creatures) = (g5, c : creatures)
       where
+        -- TODO: extract to a primitive generator
         fakeSize = 10  -- TODO: add real creature sizes
         c = Creature{ position = (x, y)
                     , targetDir = dir
