@@ -6,6 +6,7 @@ module Haskarium.Motion
     ( Interactive (..)
     ) where
 
+import           Control.Monad.State.Strict (State, runState, state)
 import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
@@ -15,46 +16,53 @@ import           System.Random (StdGen, randomR)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
-                                  Distance, Flea (..), Fly, Speed, Time,
+                                  Distance, Flea (..), Fly, Rnd, Speed, Time,
                                   World (..))
 import           Haskarium.Util (distance)
 
 updateCreature
     :: Interactive (Creature s)
-    => Time -> Creature s -> (StdGen, [Creature s]) -> (StdGen, [Creature s])
-updateCreature dt creature (g, creatures) = (g', c : creatures)
+    => Time -> Creature s -> ([Creature s], StdGen) -> ([Creature s], StdGen)
+updateCreature dt creature (creatures, g) = (c : creatures, g')
   where
-    (g', c) = creatureTurn (onTick dt creature) dt g
+    (c, g') =
+        runState (onTick dt creature `andThen` \c' -> creatureTurn c' dt) g
+
+andThen :: State s a -> (a -> State s b) -> State s b
+andThen sa sb = state $ \s -> let (a, s') = runState sa s in runState (sb a) s'
 
 class Interactive a where
-    onTick :: Time -> a -> a
-    onTick _ = id
+    onTick :: Time -> a -> Rnd a
+    onTick _ = pure
 
-    onEvent :: Event -> a -> a
-    onEvent _ = id
+    onEvent :: Event -> a -> Rnd a
+    onEvent _ = pure
 
 instance Interactive World where
-    onTick dt World{ants, centipedes, fleas, flies, randomGen = g0} = World
-        { ants        = ants'
-        , centipedes  = centipedes'
-        , fleas       = fleas'
-        , flies       = flies'
-        , randomGen   = g4
-        }
-      where
-        (g1, ants')       = foldr (updateCreature dt) (g0, []) ants
-        (g2, centipedes') = foldr (updateCreature dt) (g1, []) centipedes
-        (g3, fleas')      = foldr (updateCreature dt) (g2, []) fleas
-        (g4, flies')      = foldr (updateCreature dt) (g3, []) flies
+    onTick dt World{ants, centipedes, fleas, flies} = state $ \g0 ->
+        let
+        (ants', g1)       = foldr (updateCreature dt) ([], g0) ants
+        (centipedes', g2) = foldr (updateCreature dt) ([], g1) centipedes
+        (fleas', g3)      = foldr (updateCreature dt) ([], g2) fleas
+        (flies', g4)      = foldr (updateCreature dt) ([], g3) flies
+        in
+        ( World
+            { ants        = ants'
+            , centipedes  = centipedes'
+            , fleas       = fleas'
+            , flies       = flies'
+            }
+        , g4
+        )
 
 instance Interactive (Creature Ant) where
-    onTick = run 20
+    onTick dt = pure . run 20 dt
 
 instance Interactive (Creature Fly) where
-    onTick = run 200
+    onTick dt = pure . run 200 dt
 
 instance Interactive (Creature Flea) where
-    onTick dt creature@Creature{species = Flea{idleTime}} =
+    onTick dt creature@Creature{species = Flea{idleTime}} = pure $
         if idleTime < fleaMaxIdleTime then
             creature{species = Flea{idleTime = idleTime + dt}}
         else
@@ -70,7 +78,7 @@ run speed dt creature = creatureMovedCheckCollisions creature dist
 
 instance Interactive (Creature Centipede) where
     onTick dt creature@Creature{species} =
-        runHead{species = Centipede{segments=newSegments}}
+        pure runHead{species = Centipede{segments=newSegments}}
       where
         Centipede{segments} = species
 
@@ -94,17 +102,19 @@ instance Interactive (Creature Centipede) where
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Creature s -> Time -> StdGen -> (StdGen, Creature s)
-creatureTurn creature dt g =
-    (g', creature{targetDir = targetDir', currentDir = newCurrentDir})
-  where
-    Creature{targetDir, currentDir, turnRate} = creature
+creatureTurn :: Creature s -> Time -> Rnd (Creature s)
+creatureTurn creature dt = state $ \g ->
+    let
     (targetDir', g') =
         if   (currentDir  <= targetDir && targetDir <= currentDir')
           || (currentDir' <= targetDir && targetDir <= currentDir ) then
             randomR (0, 2 * pi) g
         else
             (targetDir, g)
+    in
+    (creature{targetDir = targetDir', currentDir = newCurrentDir}, g')
+  where
+    Creature{targetDir, currentDir, turnRate} = creature
     newCurrentDir
         | currentDir' < 0       = currentDir' + 2 * pi
         | currentDir' > 2 * pi  = currentDir' - 2 * pi

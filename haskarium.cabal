@@ -15,5 +15,6 @@ executable haskarium-view
                     Haskarium.Util
     build-depends:  base
                   , gloss
-                  , random
+                  , mtl
                   , optparse-applicative
+                  , random

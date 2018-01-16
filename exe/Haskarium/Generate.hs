@@ -3,48 +3,42 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Haskarium.Generate
-    ( makeWorld
+    ( makeGame
     ) where
 
+import           Control.Monad.State.Strict (state)
 import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
 import           System.Random (StdGen, randomR)
 
 import           Haskarium.Types (Angle, Ant (..), Centipede (..),
-                                  Creature (..), Flea (..), Fly (..),
-                                  World (..), Rnd (..))
+                                  Creature (..), Flea (..), Fly (..), Rnd,
+                                  World (..))
 
 type Window = (Point, Point)
 
-makeWorld :: Window -> StdGen -> World
-makeWorld window seed = world' { randomGen = next }
-  where
-    (next, world') = runRnd (worldGen window seed) seed
-
--- TODO: Get creature ranges from worldgen options
-worldGen :: Window -> StdGen -> Rnd World
-worldGen window dummyGen = World
+makeGame :: Window -> Rnd World
+makeGame window = World
     <$> makeCreaturesRnd window 0 10
     <*> makeCreaturesRnd window 0 10
     <*> makeCreaturesRnd window 0 10
     <*> makeCreaturesRnd window 0 10
-    <*> pure dummyGen -- FIXME: extract to simulation state
 
 makeCreaturesRnd
     :: forall species. Generate species
     => Window -> Natural -> Natural -> Rnd [Creature species]
-makeCreaturesRnd window minN maxN = Rnd $ \g ->
+makeCreaturesRnd window minN maxN = state $ \g ->
     makeCreatures window g minN maxN
 
 makeCreatures
     :: forall species.
     Generate species
-    => Window -> StdGen -> Natural -> Natural -> (StdGen, [Creature species])
-makeCreatures window g minN maxN = foldr makeCreatures' (g', []) [1::Int .. nCreatures]
+    => Window -> StdGen -> Natural -> Natural -> ([Creature species], StdGen)
+makeCreatures window g minN maxN = foldr makeCreatures' ([], g') [1::Int .. nCreatures]
   where
     ((minX, minY), (maxX, maxY)) = window
     (nCreatures, g') = randomR (fromIntegral minN, fromIntegral maxN) g
-    makeCreatures' _ (g0, creatures) = (g5, c : creatures)
+    makeCreatures' _ (creatures, g0) = (c : creatures, g5)
       where
         -- TODO: extract to a primitive generator
         fakeSize = 10  -- TODO: add real creature sizes
