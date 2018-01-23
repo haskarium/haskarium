@@ -6,7 +6,7 @@ module Haskarium.Motion
     ( Interactive (..)
     ) where
 
-import           Control.Monad.State.Strict (State, runState, state)
+import           Control.Monad.State.Strict (runState, state)
 import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
@@ -18,18 +18,15 @@ import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
                                   Distance, Flea (..), Fly, Rnd, Speed, Time,
                                   World (..))
-import           Haskarium.Util (distance)
+import           Haskarium.Util (andThen, distance)
 
 updateCreature
     :: Interactive (Creature s)
     => Time -> Creature s -> ([Creature s], StdGen) -> ([Creature s], StdGen)
 updateCreature dt creature (creatures, g) = (c : creatures, g')
   where
-    (c, g') =
-        runState (onTick dt creature `andThen` \c' -> creatureTurn c' dt) g
-
-andThen :: State s a -> (a -> State s b) -> State s b
-andThen sa sb = state $ \s -> let (a, s') = runState sa s in runState (sb a) s'
+    (c, g') = runState updateCreature' g
+    updateCreature' = onTick dt creature `andThen` \c' -> creatureTurn c' dt
 
 class Interactive a where
     onTick :: Time -> a -> Rnd a

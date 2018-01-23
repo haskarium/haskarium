@@ -6,73 +6,82 @@ module Haskarium.Generate
     ( makeGame
     ) where
 
-import           Control.Monad.State.Strict (state)
+import           Control.Monad.State.Strict (State, runState, state)
 import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
-import           System.Random (StdGen, randomR)
+import           System.Random (Random, randomR)
 
 import           Haskarium.Types (Angle, Ant (..), Centipede (..),
                                   Creature (..), Flea (..), Fly (..), Rnd,
                                   World (..))
+import           Haskarium.Util (andThen)
 
 type Window = (Point, Point)
 
 makeGame :: Window -> Rnd World
 makeGame window = World
-    <$> makeCreaturesRnd window 0 10
-    <*> makeCreaturesRnd window 0 10
-    <*> makeCreaturesRnd window 0 10
-    <*> makeCreaturesRnd window 0 10
-
-makeCreaturesRnd
-    :: forall species. Generate species
-    => Window -> Natural -> Natural -> Rnd [Creature species]
-makeCreaturesRnd window minN maxN = state $ \g ->
-    makeCreatures window g minN maxN
+    <$> makeCreatures window 0 10
+    <*> makeCreatures window 0 10
+    <*> makeCreatures window 0 10
+    <*> makeCreatures window 0 10
 
 makeCreatures
-    :: forall species.
-    Generate species
-    => Window -> StdGen -> Natural -> Natural -> ([Creature species], StdGen)
-makeCreatures window g minN maxN = foldr makeCreatures' ([], g') [1::Int .. nCreatures]
+    :: forall species. Generate species
+    => Window -> Natural -> Natural -> Rnd [Creature species]
+makeCreatures window minN maxN =
+    pNCreatures `andThen` \nCreatures ->
+    mapS makeCreature [1 :: Int .. nCreatures]
   where
     ((minX, minY), (maxX, maxY)) = window
-    (nCreatures, g') = randomR (fromIntegral minN, fromIntegral maxN) g
-    makeCreatures' _ (creatures, g0) = (c : creatures, g5)
+    pNCreatures = randomRS (fromIntegral minN, fromIntegral maxN)
+    makeCreature _ = Creature
+        <$> pPos
+        <*> pDir
+        <*> pDir
+        <*> pTR
+        <*> generate
+        <*> pure fakeSize
       where
-        -- TODO: extract to a primitive generator
         fakeSize = 10  -- TODO: add real creature sizes
-        c = Creature{ position = (x, y)
-                    , targetDir = dir
-                    , currentDir = dir
-                    , turnRate = tr
-                    , species = s
-                    , size = fakeSize}
-        (x, g1) = randomR (minX + fakeSize / 2, maxX - fakeSize / 2) g0
-        (y, g2) = randomR (minY + fakeSize / 2, maxY - fakeSize / 2) g1
-        (dir, g3) = randomR (0, 2 * pi) g2
-        (tr, g4) = randomR (turnRateRange @species) g3
-        (s, g5) = generate g4
+        px = randomRS (minX + fakeSize / 2, maxX - fakeSize / 2)
+        py = randomRS (minY + fakeSize / 2, maxY - fakeSize / 2)
+        pPos = (,) <$> px <*> py
+        pDir = randomRS (0, 2 * pi)
+        pTR = randomRS (turnRateRange @species)
+
+randomRS :: Random a => (a, a) -> Rnd a
+randomRS = state . randomR
+
+-- map  :: (a -> State s b) -> [a] -> [State s b]
+mapS :: (a -> State s b) -> [a] -> State s [b]
+mapS fsb as = sequenceS $ map fsb as
+
+sequenceS :: [State s a] -> State s [a]
+sequenceS [] = pure [] -- state $ \s -> ([], s)
+sequenceS (p : ps) = state $ \s0 ->
+    let (a,  s1) = runState p              s0
+        (as, s2) = runState (sequenceS ps) s1
+    in  (a : as, s2)
 
 class Generate a where
-    generate :: StdGen -> (a, StdGen)
+    generate :: Rnd a
 
     turnRateRange :: (Angle, Angle)
     turnRateRange = (pi / 4, pi / 2)
 
 instance Generate Centipede where
-    generate g =
-        let (numSegments, g') = randomR (5, 15) g
-        in  (Centipede{segments = replicate numSegments (0, 0)}, g')
+    generate = mkCentipede <$> randomRS (5, 15)
+      where
+        mkCentipede numSegments =
+            Centipede{segments = replicate numSegments (0, 0)}
+
     turnRateRange = (pi / 25, pi / 20)
 
 instance Generate Flea where
-    generate g =
-        let (eagerness, g') = randomR (0.0, 1.0) g
-        in  (Flea{idleTime = eagerness}, g')
+    generate = Flea <$> randomRS (0.0, 1.0)
 
 instance Generate Ant where
-    generate g = (Ant, g)
+    generate = pure Ant
 
 instance Generate Fly where
-    generate g = (Fly, g)
+    generate = pure Fly
