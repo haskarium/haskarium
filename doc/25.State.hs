@@ -27,3 +27,23 @@ instance Applicative (State s) where
         in (c, s2)
 
 -- newtype IO a = IO (RealWorld -> (RealWorld, a))
+
+(*>) :: Applicative f => f a -> f b -> f b
+(*>) = liftA2 (const id)
+
+(<*) :: Applicative f => f a -> f b -> f a
+(<*) = liftA2 const
+
+-- | ap
+(<*>) :: Applicative af => af (a -> b) -> af a -> af b
+(<*>) = liftA2 id
+
+liftA2 f pa pb = f <$> pa <*> pb
+
+sequenceA :: [f a] -> f [a]
+-- sequenceA []       = pure []
+-- sequenceA (p : ps) = liftA2 (:) p (sequenceA ps)
+sequenceA = foldr (liftA2 (:)) (pure [])
+
+traverse :: (a -> f b) -> [a] -> f [b]
+traverse fb as = sequenceA $ map fb as

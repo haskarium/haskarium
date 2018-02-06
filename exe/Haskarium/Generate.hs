@@ -6,7 +6,7 @@ module Haskarium.Generate
     ( makeGame
     ) where
 
-import           Control.Monad.State.Strict (State, runState, state)
+import           Control.Monad.State.Strict (state)
 import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
 import           System.Random (Random, randomR)
@@ -30,7 +30,7 @@ makeCreatures
     => Window -> Natural -> Natural -> Rnd [Creature species]
 makeCreatures window minN maxN =
     pNCreatures `andThen` \nCreatures ->
-    mapS makeCreature [1 :: Int .. nCreatures]
+    traverse makeCreature [1 :: Int .. nCreatures]
   where
     ((minX, minY), (maxX, maxY)) = window
     pNCreatures = randomRS (fromIntegral minN, fromIntegral maxN)
@@ -51,17 +51,6 @@ makeCreatures window minN maxN =
 
 randomRS :: Random a => (a, a) -> Rnd a
 randomRS = state . randomR
-
--- map  :: (a -> State s b) -> [a] -> [State s b]
-mapS :: (a -> State s b) -> [a] -> State s [b]
-mapS fsb as = sequenceS $ map fsb as
-
-sequenceS :: [State s a] -> State s [a]
-sequenceS [] = pure [] -- state $ \s -> ([], s)
-sequenceS (p : ps) = state $ \s0 ->
-    let (a,  s1) = runState p              s0
-        (as, s2) = runState (sequenceS ps) s1
-    in  (a : as, s2)
 
 class Generate a where
     generate :: Rnd a
