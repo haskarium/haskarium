@@ -1,10 +1,12 @@
 module Haskarium.Util
     ( andThen
     , distance
+    , randomRS
     ) where
 
 import           Control.Monad.State.Strict (State, runState, state)
 import           Graphics.Gloss (Point)
+import           System.Random (Random, StdGen, randomR)
 
 import           Haskarium.Types (Distance)
 
@@ -18,3 +20,6 @@ andThen sa fsb = state $ \s0 ->
         sb = fsb a
         (b, s2) = runState sb s1
     in  (b, s2)
+
+randomRS :: Random a => (a, a) -> State StdGen a
+randomRS = state . randomR

@@ -6,15 +6,14 @@ module Haskarium.Generate
     ( makeGame
     ) where
 
-import           Control.Monad.State.Strict (state)
+import           Control.Monad (replicateM)
 import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
-import           System.Random (Random, randomR)
 
 import           Haskarium.Types (Angle, Ant (..), Centipede (..),
                                   Creature (..), Flea (..), Fly (..), Rnd,
                                   World (..))
-import           Haskarium.Util (andThen)
+import           Haskarium.Util (andThen, randomRS)
 
 type Window = (Point, Point)
 
@@ -30,11 +29,11 @@ makeCreatures
     => Window -> Natural -> Natural -> Rnd [Creature species]
 makeCreatures window minN maxN =
     pNCreatures `andThen` \nCreatures ->
-    traverse makeCreature [1 :: Int .. nCreatures]
+    replicateM nCreatures makeCreature
   where
     ((minX, minY), (maxX, maxY)) = window
     pNCreatures = randomRS (fromIntegral minN, fromIntegral maxN)
-    makeCreature _ = Creature
+    makeCreature = Creature
         <$> pPos
         <*> pDir
         <*> pDir
@@ -48,9 +47,6 @@ makeCreatures window minN maxN =
         pPos = (,) <$> px <*> py
         pDir = randomRS (0, 2 * pi)
         pTR = randomRS (turnRateRange @species)
-
-randomRS :: Random a => (a, a) -> Rnd a
-randomRS = state . randomR
 
 class Generate a where
     generate :: Rnd a

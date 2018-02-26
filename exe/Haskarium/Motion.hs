@@ -6,27 +6,17 @@ module Haskarium.Motion
     ( Interactive (..)
     ) where
 
-import           Control.Monad.State.Strict (runState, state)
 import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
                                                intersectSegVertLine)
 import           Graphics.Gloss.Interface.Pure.Game (Event)
-import           System.Random (StdGen, randomR)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
                                   Distance, Flea (..), Fly, Rnd, Speed, Time,
                                   World (..))
-import           Haskarium.Util (andThen, distance)
-
-updateCreature
-    :: Interactive (Creature s)
-    => Time -> Creature s -> ([Creature s], StdGen) -> ([Creature s], StdGen)
-updateCreature dt creature (creatures, g) = (c : creatures, g')
-  where
-    (c, g') = runState updateCreature' g
-    updateCreature' = onTick dt creature `andThen` \c' -> creatureTurn c' dt
+import           Haskarium.Util (distance, randomRS)
 
 class Interactive a where
     onTick :: Time -> a -> Rnd a
@@ -36,30 +26,20 @@ class Interactive a where
     onEvent _ = pure
 
 instance Interactive World where
-    onTick dt World{ants, centipedes, fleas, flies} = state $ \g0 ->
-        let
-        (ants', g1)       = foldr (updateCreature dt) ([], g0) ants
-        (centipedes', g2) = foldr (updateCreature dt) ([], g1) centipedes
-        (fleas', g3)      = foldr (updateCreature dt) ([], g2) fleas
-        (flies', g4)      = foldr (updateCreature dt) ([], g3) flies
-        in
-        ( World
-            { ants        = ants'
-            , centipedes  = centipedes'
-            , fleas       = fleas'
-            , flies       = flies'
-            }
-        , g4
-        )
+    onTick dt World{ants, centipedes, fleas, flies} = World
+        <$> traverse (onTick dt) ants
+        <*> traverse (onTick dt) centipedes
+        <*> traverse (onTick dt) fleas
+        <*> traverse (onTick dt) flies
 
 instance Interactive (Creature Ant) where
-    onTick dt = pure . run 20 dt
+    onTick dt = creatureTurn dt . run 20 dt
 
 instance Interactive (Creature Fly) where
-    onTick dt = pure . run 200 dt
+    onTick dt = creatureTurn dt . run 200 dt
 
 instance Interactive (Creature Flea) where
-    onTick dt creature@Creature{species = Flea{idleTime}} = pure $
+    onTick dt creature@Creature{species = Flea{idleTime}} = creatureTurn dt $
         if idleTime < fleaMaxIdleTime then
             creature{species = Flea{idleTime = idleTime + dt}}
         else
@@ -75,7 +55,7 @@ run speed dt creature = creatureMovedCheckCollisions creature dist
 
 instance Interactive (Creature Centipede) where
     onTick dt creature@Creature{species} =
-        pure runHead{species = Centipede{segments=newSegments}}
+        creatureTurn dt $ runHead{species = Centipede{segments=newSegments}}
       where
         Centipede{segments} = species
 
@@ -99,18 +79,17 @@ instance Interactive (Creature Centipede) where
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Creature s -> Time -> Rnd (Creature s)
-creatureTurn creature dt = state $ \g ->
-    let
-    (targetDir', g') =
-        if   (currentDir  <= targetDir && targetDir <= currentDir')
-          || (currentDir' <= targetDir && targetDir <= currentDir ) then
-            randomR (0, 2 * pi) g
-        else
-            (targetDir, g)
-    in
-    (creature{targetDir = targetDir', currentDir = newCurrentDir}, g')
+creatureTurn :: Time -> Creature s -> Rnd (Creature s)
+creatureTurn dt creature = update <$> getTargetDir
   where
+    getTargetDir
+        | reachedTargetDir = randomRS (0, 2 * pi)
+        | otherwise = pure targetDir
+    update targetDir' =
+        creature{targetDir = targetDir', currentDir = newCurrentDir}
+    reachedTargetDir =
+           (currentDir  <= targetDir && targetDir <= currentDir')
+        || (currentDir' <= targetDir && targetDir <= currentDir )
     Creature{targetDir, currentDir, turnRate} = creature
     newCurrentDir
         | currentDir' < 0       = currentDir' + 2 * pi
