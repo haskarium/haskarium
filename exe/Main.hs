@@ -1,9 +1,9 @@
 {-# LANGUAGE RecordWildCards #-}
 
 import           Control.Monad.State.Strict (runState)
-import           Graphics.Gloss (Display (InWindow), play, white)
 import           Data.Maybe (fromMaybe)
 import           Data.Monoid ((<>))
+import           Graphics.Gloss (Display (InWindow), play, white)
 import           Options.Applicative
 import           System.Random (StdGen, newStdGen)
 
@@ -45,7 +45,7 @@ opts = SimOptions
     <$> option auto (short 'w' <> long "width" <> value 800)
     <*> option auto (short 'h' <> long "height" <> value 600)
     <*> option auto (short 'f' <> long "fps" <> value 60)
-    <*> optional (option auto (short 's' <> long "seed"))
+    <*> optional (option auto $ short 's' <> long "seed")
 
 runStateEndo :: (a -> b -> Rnd b) -> a -> (b, StdGen) -> (b, StdGen)
 runStateEndo f a (b, s) = runState (f a b) s

@@ -25,8 +25,8 @@ makeGame window = World
     <*> makeCreatures window 0 10
 
 makeCreatures
-    :: forall species. Generate species
-    => Window -> Natural -> Natural -> Rnd [Creature species]
+    :: forall species.
+    Generate species => Window -> Natural -> Natural -> Rnd [Creature species]
 makeCreatures window minN maxN =
     pNCreatures `andThen` \nCreatures ->
     replicateM nCreatures makeCreature
