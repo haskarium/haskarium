@@ -39,7 +39,8 @@ instance Interactive (Creature Fly) where
     onTick dt = creatureTurn dt . run 200 dt
 
 instance Interactive (Creature Flea) where
-    onTick dt creature@Creature{species = Flea{idleTime}} = creatureTurn dt $
+    onTick dt creature@Creature{species = Flea{idleTime}} =
+        creatureTurn dt $
         if idleTime < fleaMaxIdleTime then
             creature{species = Flea{idleTime = idleTime + dt}}
         else
@@ -55,7 +56,7 @@ run speed dt creature = creatureMovedCheckCollisions creature dist
 
 instance Interactive (Creature Centipede) where
     onTick dt creature@Creature{species} =
-        creatureTurn dt $ runHead{species = Centipede{segments=newSegments}}
+        creatureTurn dt runHead{species = Centipede{segments=newSegments}}
       where
         Centipede{segments} = species
 

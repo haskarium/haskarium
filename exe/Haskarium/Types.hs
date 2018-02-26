@@ -1,16 +1,16 @@
 module Haskarium.Types
     ( Angle
-    , RadiansPerSecond
     , Ant (..)
     , Centipede (..)
     , Creature (..)
     , Distance
     , Flea (..)
     , Fly (..)
+    , RadiansPerSecond
+    , Rnd
     , Speed
     , Time
     , World (..)
-    , Rnd
     ) where
 
 import           Control.Monad.State.Strict (State)
