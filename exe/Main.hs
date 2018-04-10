@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
+import           Control.Monad.RWS.Strict (runRWS)
 import           Control.Monad.State.Strict (runState)
 import           Data.Maybe (fromMaybe)
 import           Data.Monoid ((<>))
@@ -10,7 +11,7 @@ import           System.Random (StdGen, newStdGen)
 import           Haskarium.Draw (draw)
 import           Haskarium.Generate (makeGame)
 import           Haskarium.Motion (onEvent, onTick)
-import           Haskarium.Types (Rnd)
+import           Haskarium.Types (Sim, World)
 
 main :: IO ()
 main = do
@@ -22,16 +23,17 @@ main = do
         display = InWindow "haskarium" (optWidth, optHeight) (0, 0)
 
     randomSeed <- newStdGen
-    let startWorld = runState (makeGame window) (fromMaybe randomSeed optSeed)
+    let startGame =
+            runState (makeGame window) (fromMaybe randomSeed optSeed)
 
     play
         display
         white
         optRefresh
-        startWorld
+        startGame
         (draw . fst)
-        (runStateEndo onEvent)
-        (runStateEndo onTick)
+        (runSim onEvent)
+        (runSim onTick)
 
 data SimOptions = SimOptions
     { optWidth   :: Int
@@ -47,5 +49,12 @@ opts = SimOptions
     <*> option auto (short 'f' <> long "fps" <> value 60)
     <*> optional (option auto $ short 's' <> long "seed")
 
-runStateEndo :: (a -> b -> Rnd b) -> a -> (b, StdGen) -> (b, StdGen)
-runStateEndo f a (b, s) = runState (f a b) s
+runSim
+    :: (event -> World -> Sim World)
+    -> event
+    -> (World, StdGen)
+    -> (World, StdGen)
+runSim sim event (world, rndState) =
+    let (world', rndState', ()) =
+            runRWS (sim event world) world rndState
+    in (world', rndState')

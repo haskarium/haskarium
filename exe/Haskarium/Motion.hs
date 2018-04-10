@@ -14,15 +14,15 @@ import           Graphics.Gloss.Interface.Pure.Game (Event)
 
 import           Haskarium.Const
 import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
-                                  Distance, Flea (..), Fly, Rnd, Speed, Time,
+                                  Distance, Flea (..), Fly, Sim, Speed, Time,
                                   World (..))
 import           Haskarium.Util (distance, randomRS)
 
 class Interactive a where
-    onTick :: Time -> a -> Rnd a
+    onTick :: Time -> a -> Sim a
     onTick _ = pure
 
-    onEvent :: Event -> a -> Rnd a
+    onEvent :: Event -> a -> Sim a
     onEvent _ = pure
 
 instance Interactive World where
@@ -80,7 +80,7 @@ instance Interactive (Creature Centipede) where
 
         maxNeck = 1.5 * centipedeSegmentRadius
 
-creatureTurn :: Time -> Creature s -> Rnd (Creature s)
+creatureTurn :: Time -> Creature s -> Sim (Creature s)
 creatureTurn dt creature = update <$> getTargetDir
   where
     getTargetDir

@@ -1,10 +1,12 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Haskarium.Util
-    ( andThen
-    , distance
+    ( distance
     , randomRS
     ) where
 
-import           Control.Monad.State.Strict (State, runState, state)
+import           Control.Monad.State.Strict (MonadState, state)
 import           Graphics.Gloss (Point)
 import           System.Random (Random, StdGen, randomR)
 
@@ -14,12 +16,9 @@ distance :: Point -> Point -> Distance
 distance (x1, y1) (x2, y2) =
     sqrt $ (x1 - x2) ^ (2 :: Int) + (y1 - y2) ^ (2 :: Int)
 
-andThen :: State s a -> (a -> State s b) -> State s b
-andThen sa fsb = state $ \s0 ->
-    let (a, s1) = runState sa s0
-        sb = fsb a
-        (b, s2) = runState sb s1
-    in  (b, s2)
-
-randomRS :: Random a => (a, a) -> State StdGen a
-randomRS = state . randomR
+randomRS
+    :: (Random a, MonadState StdGen m)
+    => (a, a) -> m a
+randomRS range = state $ \s ->
+    let (a, s1) = randomR range s
+    in (a, s1)

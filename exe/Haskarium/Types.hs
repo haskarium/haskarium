@@ -7,13 +7,13 @@ module Haskarium.Types
     , Flea (..)
     , Fly (..)
     , RadiansPerSecond
-    , Rnd
+    , Sim
     , Speed
     , Time
     , World (..)
     ) where
 
-import           Control.Monad.State.Strict (State)
+import           Control.Monad.RWS.Strict (RWS)
 import           Graphics.Gloss (Point)
 import           System.Random (StdGen)
 
@@ -47,4 +47,4 @@ data World = World
     , flies :: ![Creature Fly]
     }
 
-type Rnd a = State StdGen a
+type Sim a = RWS World () StdGen a
