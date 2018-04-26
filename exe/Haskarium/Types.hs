@@ -14,8 +14,8 @@ module Haskarium.Types
     ) where
 
 import           Control.Monad.RWS.Strict (RWS)
-import           Graphics.Gloss (Point)
-import           System.Random (StdGen)
+import           Graphics.Gloss           (Point)
+import           System.Random            (StdGen)
 
 type Angle = Float
 type Distance = Float
