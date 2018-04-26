@@ -16,9 +16,13 @@ import           Graphics.Gloss.Interface.Pure.Game (Event)
 import           Haskarium.Const
 import           Haskarium.Types                    (Angle, Ant, Centipede (..),
                                                      Creature (..), Distance,
-                                                     Flea (..), Fly, Sim, Speed,
-                                                     Time, World (..))
-import           Haskarium.Util                     (distance, randomRS)
+                                                     Flea (..), Fly,
+                                                     LandCreature (..),
+                                                     Located (..), Sim, Speed,
+                                                     Time, World (..),
+                                                     landCreatures)
+import           Haskarium.Util                     (distance, randomRS,
+                                                     worldOf)
 
 class Interactive a where
     onTick :: Time -> a -> Sim a
@@ -115,8 +119,12 @@ creatureMovedCheckCollisions :: Creature s -> Distance -> Sim (Creature s)
 creatureMovedCheckCollisions creature dist
     | dist <= 0 = pure creature
     | otherwise = do
+        cs <- worldOf landCreatures :: Sim [LandCreature]
+
         -- TODO: look out
+        let _avoid = mconcat [ getPoints c | LandCreature c <- cs ]
         let checkedDist = dist
+
         pure creature{position = advance creature checkedDist}
 
 pointMoved :: Point -> Distance -> Angle -> Point
