@@ -6,16 +6,16 @@ module Haskarium.Generate
     ( makeGame
     ) where
 
-import           Control.Monad              (replicateM)
+import           Control.Monad (replicateM)
 import           Control.Monad.State.Strict (State)
-import           Graphics.Gloss             (Point)
-import           Numeric.Natural            (Natural)
-import           System.Random              (StdGen)
+import           Graphics.Gloss (Point)
+import           Numeric.Natural (Natural)
+import           System.Random (StdGen)
 
-import           Haskarium.Types            (Angle, Ant (..), Centipede (..),
-                                             Creature (..), Flea (..), Fly (..),
-                                             World (..))
-import           Haskarium.Util             (randomRS)
+import           Haskarium.Types (Angle, Ant (..), Centipede (..),
+                                  Creature (..), Flea (..), Fly (..),
+                                  World (..))
+import           Haskarium.Util (randomRS)
 
 type Window = (Point, Point)
 

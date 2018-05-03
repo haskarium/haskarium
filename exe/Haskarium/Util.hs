@@ -7,12 +7,12 @@ module Haskarium.Util
     , worldOf
     ) where
 
-import           Control.Monad.Reader       (MonadReader, asks)
+import           Control.Monad.Reader (MonadReader, asks)
 import           Control.Monad.State.Strict (MonadState, state)
-import           Graphics.Gloss             (Point)
-import           System.Random              (Random, StdGen, randomR)
+import           Graphics.Gloss (Point)
+import           System.Random (Random, StdGen, randomR)
 
-import           Haskarium.Types            (Distance, World)
+import           Haskarium.Types (World, Distance)
 
 distance :: Point -> Point -> Distance
 distance (x1, y1) (x2, y2) =

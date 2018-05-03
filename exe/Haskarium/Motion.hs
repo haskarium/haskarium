@@ -6,23 +6,19 @@ module Haskarium.Motion
     ( Interactive (..)
     ) where
 
-import           Control.Monad                      ((>=>))
-import           Graphics.Gloss                     (Point)
-import           Graphics.Gloss.Geometry.Angle      (normalizeAngle)
-import           Graphics.Gloss.Geometry.Line       (intersectSegHorzLine,
-                                                     intersectSegVertLine)
+import           Control.Monad ((>=>))
+import           Graphics.Gloss (Point)
+import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
+import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
+                                               intersectSegVertLine)
 import           Graphics.Gloss.Interface.Pure.Game (Event)
 
 import           Haskarium.Const
-import           Haskarium.Types                    (Angle, Ant, Centipede (..),
-                                                     Creature (..), Distance,
-                                                     Flea (..), Fly,
-                                                     LandCreature (..),
-                                                     Located (..), Sim, Speed,
-                                                     Time, World (..),
-                                                     landCreatures)
-import           Haskarium.Util                     (distance, randomRS,
-                                                     worldOf)
+import           Haskarium.Types (Angle, Ant, Centipede(..), Creature (..),
+                                  Distance, Flea(..), Fly, LandCreature(..),
+                                  Sim, Speed, Time, World (..), getPoints,
+                                  landCreatures)
+import           Haskarium.Util (distance, randomRS, worldOf)
 
 class Interactive a where
     onTick :: Time -> a -> Sim a
