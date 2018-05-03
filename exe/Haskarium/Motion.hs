@@ -6,6 +6,7 @@ module Haskarium.Motion
     ( Interactive (..)
     ) where
 
+import           Control.Monad ((>=>))
 import           Graphics.Gloss (Point)
 import           Graphics.Gloss.Geometry.Angle (normalizeAngle)
 import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
@@ -13,10 +14,11 @@ import           Graphics.Gloss.Geometry.Line (intersectSegHorzLine,
 import           Graphics.Gloss.Interface.Pure.Game (Event)
 
 import           Haskarium.Const
-import           Haskarium.Types (Angle, Ant, Centipede (..), Creature (..),
-                                  Distance, Flea (..), Fly, Sim, Speed, Time,
-                                  World (..))
-import           Haskarium.Util (distance, randomRS)
+import           Haskarium.Types (Angle, Ant, Centipede(..), Creature (..),
+                                  Distance, Flea(..), Fly, LandCreature(..),
+                                  Sim, Speed, Time, World (..), getPoints,
+                                  landCreatures)
+import           Haskarium.Util (distance, randomRS, worldOf)
 
 class Interactive a where
     onTick :: Time -> a -> Sim a
@@ -33,36 +35,41 @@ instance Interactive World where
         <*> traverse (onTick dt) flies
 
 instance Interactive (Creature Ant) where
-    onTick dt = creatureTurn dt . run 20 dt
+    onTick dt = run 20 dt >=> creatureTurn dt
 
 instance Interactive (Creature Fly) where
-    onTick dt = creatureTurn dt . run 200 dt
+    onTick dt = run 200 dt >=> creatureTurn dt
 
 instance Interactive (Creature Flea) where
-    onTick dt creature@Creature{species = Flea{idleTime}} =
-        creatureTurn dt $
-        if idleTime < fleaMaxIdleTime then
-            creature{species = Flea{idleTime = idleTime + dt}}
-        else
-            (creatureMovedCheckCollisions creature fleaJumpDistance)
-                {species = Flea{idleTime = idleTime + dt - fleaMaxIdleTime}}
+    onTick dt creature@Creature{species = Flea{idleTime}} = do
+        newCreature <-
+            if idleTime < fleaMaxIdleTime then
+                pure creature{species = Flea{idleTime = idleTime + dt}}
+            else do
+                moved <- creatureMovedCheckCollisions creature fleaJumpDistance
+                pure moved
+                    { species = Flea
+                        { idleTime = idleTime + dt - fleaMaxIdleTime
+                        }
+                    }
+        creatureTurn dt newCreature
       where
         fleaJumpDistance = 100
 
-run :: Speed -> Time -> Creature s -> Creature s
+run :: Speed -> Time -> Creature s -> Sim (Creature s)
 run speed dt creature = creatureMovedCheckCollisions creature dist
   where
     dist = dt * speed
 
 instance Interactive (Creature Centipede) where
-    onTick dt creature@Creature{species} =
-        creatureTurn dt runHead{species = Centipede{segments=newSegments}}
+    onTick dt creature@Creature{species} = do
+        newHead <- run 10 dt creature
+        let newCreature = newHead{species = Centipede{segments=newSegments newHead}}
+        creatureTurn dt newCreature
       where
         Centipede{segments} = species
 
-        runHead = run 10 dt creature
-
-        newSegments = runChain (position runHead) segments
+        newSegments newHead = runChain (position newHead) segments
 
         runChain _ [] = []
         runChain p@(px, py) (c@(cx, cy) : next) = let
@@ -104,10 +111,17 @@ creatureTurn dt creature = update <$> getTargetDir
             1
     delta = targetDir - currentDir
 
-creatureMovedCheckCollisions :: Creature s -> Distance -> Creature s
+creatureMovedCheckCollisions :: Creature s -> Distance -> Sim (Creature s)
 creatureMovedCheckCollisions creature dist
-    | dist <= 0 = creature
-    | otherwise = creature{position = advance creature dist}
+    | dist <= 0 = pure creature
+    | otherwise = do
+        cs <- worldOf landCreatures :: Sim [LandCreature]
+
+        -- TODO: look out
+        let _avoid = mconcat [ getPoints c | LandCreature c <- cs ]
+        let checkedDist = dist
+
+        pure creature{position = advance creature checkedDist}
 
 pointMoved :: Point -> Distance -> Angle -> Point
 pointMoved (x, y) dist direction = (x + dx, y + dy)
