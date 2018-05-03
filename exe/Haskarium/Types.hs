@@ -58,16 +58,16 @@ data World = World
 type Sim a = RWS World () StdGen a
 
 class Located a where
-  getPoints :: a -> [Point]
+    getPoints :: a -> [Point]
 
 instance Located (Creature Ant) where
-  getPoints Creature{position} = [position]
+    getPoints Creature{position} = [position]
 
 instance Located (Creature Flea) where
-  getPoints Creature{position} = [position]
+    getPoints Creature{position} = [position]
 
 instance Located (Creature Centipede) where
-  getPoints Creature{position, species} = position : segments species
+    getPoints Creature{position, species} = position : segments species
 
 data LandCreature
     = forall species
@@ -76,7 +76,7 @@ data LandCreature
 
 landCreatures :: World -> [LandCreature]
 landCreatures World{ants, centipedes, fleas} = mconcat
-  [ map LandCreature ants
-  , map LandCreature centipedes
-  , map LandCreature fleas
-  ]
+    [ map LandCreature ants
+    , map LandCreature centipedes
+    , map LandCreature fleas
+    ]
