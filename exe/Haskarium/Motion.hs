@@ -113,8 +113,7 @@ creatureTurn dt creature = update <$> getTargetDir
     delta = targetDir - currentDir
 
 tryToAvoid :: Creature s -> Distance -> [Point] -> (Distance, Angle)
-tryToAvoid creature@Creature{position = (x, y), species, currentDir, size}
-           dist obstacles =
+tryToAvoid creature@Creature{currentDir, size} dist obstacles =
     avoidance nearestCreature
   where
     nearestCreature = findNearest creature viewDistance obstacles
@@ -122,12 +121,12 @@ tryToAvoid creature@Creature{position = (x, y), species, currentDir, size}
     avoidance (Just (rd, ra)) =
         ( newDist rd, normalizeAngle (currentDir - newAngleDiff ra rd))
     avoidance _               = (dist, currentDir)
-    newDist d = if (d > 3 * size) then dist else 0
-    newAngleDiff a d = if (d > 3 * size) then (pi / 2 - a) else 0
+    newDist d = if d > 3 * size then dist else 0
+    newAngleDiff a d = if d > 3 * size then pi / 2 - a else 0
 
 
 findNearest:: Creature s -> Float -> [Point] -> Maybe (Distance, Angle)
-findNearest c@Creature{position = (x0, y0), currentDir} dist0 cs0 =
+findNearest Creature{position = (x0, y0), currentDir} dist0 cs0 =
     findNearest' cs0 dist0 Nothing
   where
     findNearest' [] _ result = result
@@ -157,7 +156,7 @@ creatureMovedCheckCollisions creature isLand dist = do
     let (newDist, newDir) = tryToAvoid creature dist obstacles
     let creature' = creature{currentDir = newDir}
 
-    pure creature{position = advance creature newDist}
+    pure creature{position = advance creature' newDist}
 
 pointMoved :: Point -> Distance -> Angle -> Point
 pointMoved (x, y) dist direction = (x + dx, y + dy)
