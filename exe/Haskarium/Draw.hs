@@ -7,10 +7,10 @@ module Haskarium.Draw
 
 import           Data.Monoid ((<>))
 import           Graphics.Gloss (Picture, blue, circle, circleSolid, color,
-                                 green, orange, polygon, red, rotate, translate)
+                                 green, orange, polygon, red, rotate, translate,
+                                 scale)
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
-import           Haskarium.Const (centipedeSegmentRadius)
 import           Haskarium.Types (Ant, Centipede (..), Creature (..), Flea, Fly,
                                   World (..))
 
@@ -18,37 +18,37 @@ class Drawable a where
     draw :: a -> Picture
 
 instance Drawable (Creature Centipede) where
-    draw Creature{position, species = Centipede segments} =
+    draw Creature{position, size, species = Centipede segments} =
         foldMap draw' (position : segments)
       where
         draw' (x, y) =
             translate x y .
             color orange $
-            circleSolid centipedeSegmentRadius
+            circleSolid size
 
 instance Drawable (Creature Ant) where
     draw =
-        drawCreature $ color red $ triangleBody <> translate (-5) 0 (circle 5)
+        drawCreature $ color red $ triangleBody <> translate (-0.5) 0 (circle 0.5)
 
 instance Drawable (Creature Flea) where
     draw =
-        drawCreature $ color blue $ triangleBody <> translate (-5) 0 (circle 5)
+        drawCreature $ color blue $ triangleBody <> translate (-0.5) 0 (circle 0.5)
 
 instance Drawable (Creature Fly) where
     draw =
         drawCreature $
         color green $
-        triangleBody <> translate 5 5 (circle 5) <> translate 5 (-5) (circle 5)
+        triangleBody <> translate 0.5 0.5 (circle 0.5) <> translate 0.5 (-0.5) (circle 0.5)
 
 drawCreature :: Picture -> Creature s -> Picture
-drawCreature body Creature{position = (x, y), currentDir} =
-    translate x y $ rotate (- radToDeg currentDir) body
+drawCreature body Creature{position = (x, y), currentDir, size} =
+    translate x y $ scale size size $ rotate (- radToDeg currentDir) body
 
 triangleBody :: Picture
 triangleBody = polygon
-    [ ( 5,  0)
-    , (-5, -5)
-    , (-5,  5)
+    [ ( 0.5,  0)
+    , (-0.5, -0.5)
+    , (-0.5,  0.5)
     ]
 
 instance Drawable World where

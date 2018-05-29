@@ -12,6 +12,7 @@ import           Graphics.Gloss (Point)
 import           Numeric.Natural (Natural)
 import           System.Random (StdGen)
 
+import           Haskarium.Const (creatureSizeMin, creatureSizeMax)
 import           Haskarium.Types (Angle, Ant (..), Centipede (..),
                                   Creature (..), Flea (..), Fly (..),
                                   World (..))
@@ -41,11 +42,11 @@ makeCreatures window minN maxN =
         <*> pDir
         <*> pTR
         <*> generate
-        <*> pure fakeSize
+        <*> creatureSize
       where
-        fakeSize = 10  -- TODO: add real creature sizes
-        px = randomRS (minX + fakeSize / 2, maxX - fakeSize / 2)
-        py = randomRS (minY + fakeSize / 2, maxY - fakeSize / 2)
+        creatureSize = randomRS (creatureSizeMin, creatureSizeMax)
+        px = randomRS (minX + creatureSizeMax / 2, maxX - creatureSizeMax / 2)
+        py = randomRS (minY + creatureSizeMax / 2, maxY - creatureSizeMax / 2)
         pPos = (,) <$> px <*> py
         pDir = randomRS (0, 2 * pi)
         pTR = randomRS (turnRateRange @species)
