@@ -13,3 +13,9 @@ fleaMaxIdleTime = 2
 
 centipedeSegmentRadius :: Distance
 centipedeSegmentRadius = 7
+
+creatureSizeMin :: Distance
+creatureSizeMin = 5
+
+creatureSizeMax :: Distance
+creatureSizeMax = 20

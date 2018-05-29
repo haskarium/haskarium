@@ -58,12 +58,14 @@ instance Interactive (Creature Flea) where
         fleaJumpDistance = 100
 
 run :: Speed -> Time -> Bool -> Creature s -> Sim (Creature s)
-run speed dt isLand creature = creatureMovedCheckCollisions creature isLand dist
+run speed dt isLand creature@Creature{size} =
+    creatureMovedCheckCollisions creature isLand dist
   where
-    dist = dt * speed
+    dist = dt * scaledSpeed
+    scaledSpeed = speed * creatureSizeMax / size
 
 instance Interactive (Creature Centipede) where
-    onTick dt creature@Creature{species} = do
+    onTick dt creature@Creature{species, size} = do
         newHead <- run 10 dt True creature
         let newCreature = newHead{species = Centipede{segments=newSegments newHead}}
         creatureTurn dt newCreature
@@ -86,7 +88,7 @@ instance Interactive (Creature Centipede) where
                     in (cx', cy')
             in c' : runChain c' next
 
-        maxNeck = 1.5 * centipedeSegmentRadius
+        maxNeck = 1.5 * size
 
 creatureTurn :: Time -> Creature s -> Sim (Creature s)
 creatureTurn dt creature = update <$> getTargetDir
@@ -117,12 +119,12 @@ tryToAvoid creature@Creature{currentDir, size} dist obstacles =
     avoidance nearestCreature
   where
     nearestCreature = findNearest creature viewDistance obstacles
-    viewDistance = 6 * size
+    viewDistance = 8 * size
     avoidance (Just (rd, ra)) =
         ( newDist rd, normalizeAngle (currentDir - newAngleDiff ra rd))
     avoidance _               = (dist, currentDir)
     newDist d = if d > 3 * size then dist else 0
-    newAngleDiff a d = if d > 3 * size then pi / 2 - a else 0
+    newAngleDiff a d = if d > 3 * size then pi / 4 - a else 0
 
 
 findNearest:: Creature s -> Float -> [Point] -> Maybe (Distance, Angle)
