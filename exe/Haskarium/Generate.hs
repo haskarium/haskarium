@@ -42,9 +42,9 @@ makeCreatures window minN maxN =
         <*> pDir
         <*> pTR
         <*> generate
-        <*> size
+        <*> creatureSize
       where
-        size = randomRS (creatureSizeMin, creatureSizeMax)
+        creatureSize = randomRS (creatureSizeMin, creatureSizeMax)
         px = randomRS (minX + creatureSizeMax / 2, maxX - creatureSizeMax / 2)
         py = randomRS (minY + creatureSizeMax / 2, maxY - creatureSizeMax / 2)
         pPos = (,) <$> px <*> py

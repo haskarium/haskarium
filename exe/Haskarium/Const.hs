@@ -11,9 +11,6 @@ height = 600
 fleaMaxIdleTime :: Time
 fleaMaxIdleTime = 2
 
-centipedeSegmentRadius :: Distance
-centipedeSegmentRadius = 7
-
 creatureSizeMin :: Distance
 creatureSizeMin = 5
 

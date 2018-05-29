@@ -11,7 +11,6 @@ import           Graphics.Gloss (Picture, blue, circle, circleSolid, color,
                                  scale)
 import           Graphics.Gloss.Geometry.Angle (radToDeg)
 
-import           Haskarium.Const (centipedeSegmentRadius)
 import           Haskarium.Types (Ant, Centipede (..), Creature (..), Flea, Fly,
                                   World (..))
 
